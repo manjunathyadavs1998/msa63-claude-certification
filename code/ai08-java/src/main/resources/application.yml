@@ -1,0 +1,24 @@
+spring:
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:h2:mem:course;DB_CLOSE_DELAY=-1
+  sql:
+    init:
+      mode: always
+  kafka:
+    listener:
+      auto-startup: false
+
+course:
+  claude:
+    model: claude-opus-5-5
+    max-tokens: 16000
+    timeout: 120s
+    max-retries: 2
+    effort: medium
+  agent:
+    max-steps: 25
+    max-tokens-per-run: 200000
+    refund-limit: 500.00

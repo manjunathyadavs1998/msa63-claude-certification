@@ -1,0 +1,13 @@
+A. Wrong sum, fixed by feedback
+  attempt 1: invalid -> document: Value error, calculated_total is 80.00, but line_items sum to 90.00
+  attempt 2: valid, conflict_detected=False
+B. The document's own total disagrees: valid output, flagged, not 'fixed'
+  attempt 1: valid, conflict_detected=True
+C. The value isn't in the document: retrying repeats the error
+  attempt 1: invalid -> invoice_number: Value error, invoice_number must start with INV-, as the prompt's rule says
+  attempt 2: invalid -> invoice_number: Value error, invoice_number must start with INV-, as the prompt's rule says
+  same error twice: the fix isn't in the document, so stop and route to a human
+D. A schema error, seen without tool use
+  category: Input should be 'goods', 'services', 'other' or 'unclear'
+E. Nullable field: missing means None, not an invented value
+  purchase_order = None

@@ -1,0 +1,14 @@
+allowed_tools: ['Agent', 'mcp__orders__lookup_order']
+subagent tools: ['mcp__orders__lookup_order']
+option resume: present
+option fork_session: present
+option continue_conversation: present
+option max_turns: present
+option max_budget_usd: present
+option permission_mode: present
+option mcp_servers: present
+option system_prompt: present
+refund 120: no objection
+refund 800: deny
+normalized: {'order_id': 'A1', 'placed_at': '2026-01-01T00:00:00Z', 'status': 'shipped'}
+normalized: {'order_id': 'B2', 'placed_at': '2026-01-01T00:00:00Z', 'status': 'delivered'}

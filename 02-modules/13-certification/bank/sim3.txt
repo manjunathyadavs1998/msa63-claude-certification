@@ -1,0 +1,493 @@
+#S3|Orchard Research is building a multi-agent research system on the Claude Agent SDK. A coordinator delegates to specialized subagents that search the web, analyze documents, synthesize findings and generate reports. Policy teams rely on the system's cited reports, which must show what's established, what's contested and where evidence is missing.
+
+@1.1|M
+Your coordinator's loop stops when the reply contains the phrase "research complete." On some runs it never stops, and on others it stops while Task calls are still pending. What should control this loop?
++ The `stop_reason` on each response, continuing on `tool_use` and finishing on `end_turn`
+- A broader list of phrases, so that more ways of saying the work is finished can be recognized
+- A fixed count of ten iterations, which is more than almost all of the research runs have needed
+- A rule in the system prompt requiring the exact phrase "research complete" at the end of each run
+? Natural language isn't a reliable control signal, in either direction. `stop_reason` is the explicit signal. A count ignores what the task needs, and a required phrase is still probabilistic.
+
+@1.2|H
+A report on "the economic effects of aging populations" covers only pensions and healthcare costs, though every subagent reports success. Logs show the assignments were "pension funding," "healthcare spending" and "care home costs." The team proposes tightening the synthesis prompt. What's your assessment?
++ The gap comes from the coordinator's narrow decomposition, so the fix belongs there
+- The team is right, because synthesis should have identified and added the missing labor market effects
+- The search subagent is at fault, because its queries should have gone beyond what it was assigned
+- The report subagent should reject any report that has fewer than five major topic sections
+? Subagents did what they were asked, and the logs show the missing areas were never assigned. Downstream changes treat a symptom. Synthesis shouldn't add unresearched content, and a section count doesn't ensure coverage.
+
+@1.2|H
+The coordinator reviews a draft and finds no coverage of the regulatory position. Which next step fits the iterative refinement pattern?
++ Re-delegate targeted regulatory queries to search and analysis, then re-invoke synthesis
+- Restart the whole pipeline from scratch, using the same queries and the same set of subagents
+- Accept the draft, since all of the subagents reported that their work had finished successfully
+- Ask synthesis to write the regulatory section from its general knowledge, and mark it as provisional
+? The loop evaluates gaps, targets more research and resynthesizes. A full restart repeats the same narrow work, accepting leaves the gap, and general knowledge loses citations.
+
+@1.2|M
+The coordinator has finished a second refinement round on a report about water policy. One reviewer wants to stop, because two rounds is the team's habit, while another wants to continue until the subagents have nothing further to add. According to the pattern, what should decide when a normal run stops?
++ When coverage meets its stated quality criteria
+- When a subagent reports that it would like to stop
+- After exactly three rounds, whatever has been found
+- As soon as the first draft comes back from synthesis
+? Refinement continues until coverage is sufficient. A subagent's preference isn't the criterion, a fixed count ignores quality, and the first draft hasn't been evaluated. A maximum round count remains useful as a safety limit.
+
+@1.3|H
+A coordinator's prompt to the analysis subagent says, "Analyze the second source we found earlier, and compare it with the one from before." The subagent returns vague, generic commentary. What's wrong?
++ It has no access to prior context, so those references point at nothing
+- The prompt needs a forced `tool_choice`, so that the subagent will use its analysis tools
+- The prompt is too short, because subagent prompts must meet a minimum required length
+- The subagent's memory should have been reloaded from the earlier run with `--resume`
+? Subagents don't share history, so the sources must be included in the prompt. Forcing a tool can't supply missing context, there's no minimum length, and `--resume` continues a session rather than passing context.
+
+@1.3|M
+Why should research findings be passed between agents as structured data, rather than prose?
++ It separates content from metadata such as source URLs, so attribution survives
+- It verifies automatically that each of the cited claims in the findings is accurate
+- It means that the model doesn't have to read the text, which reduces its token use
+- It's the only input format that a subagent's prompt is able to accept from a coordinator
+? Structure keeps content and metadata distinct. It doesn't verify truth, the model still reads it, and prompts accept plain text too.
+
+@1.3|H
+Which two statements are true of a standard subagent spawned by the coordinator?
++ Its prompt from the spawning call is the channel for passing it context
++ Its own tool calls stay in its context, and its final message returns to the coordinator
+- It can read the tool results from the coordinator's earlier turns
+- It shares a memory store with other subagents by default
+- It restores its context from the last time it was invoked
+? Subagents have isolated context, get what's in their prompt and return a final result. They don't see the parent's results, share memory or keep memory between invocations. *Build today: a fork subagent is a separate option that copies the conversation.*
+
+@1.6|H
+A 30-document literature review is run in one pass. Analysis of later documents is shallow, and the model contradicts itself about the same study. What's the best restructuring?
++ Analyze each document separately, then run a dedicated pass across all of them
+- Use a bigger model in one pass, with a much higher limit on the output tokens
+- Analyze only the 10 most-cited documents, as those tend to contain the most useful findings
+- Keep the one pass, and ask the model to give each of the documents the same level of attention
+? Separate local passes avoid attention dilution, and a cross-document pass handles connections. A bigger model and a request for attention don't change the structure, and sampling misses evidence.
+
+@1.4|H
+Policy requires a human sign-off before any report that names a company in a fraud allegation is published. The report subagent sometimes publishes these directly. How should this be enforced?
++ Block the publish tool in code until a recorded approval exists for that report
+- Add a prominent rule on sign-off to the report subagent's system prompt and tool description
+- Add a sentence to the report itself, telling readers that human sign-off may not have occurred
+- Have compliance review a weekly list of all the published reports that mention fraud allegations
+? A guaranteed requirement needs programmatic enforcement, based on a recorded result. Prompt rules are probabilistic, a disclaimer doesn't meet the requirement, and weekly review comes after publication.
+
+@1.5|M
+Sources return dates as Unix time, ISO 8601 and free text such as "last spring." The synthesis step gets event order wrong. Where's the most reliable place to handle the formats that can be converted reliably?
++ A `PostToolUse` hook, which normalizes results before the agent reasons about them
+- A hook on outgoing tool calls, which asks each source to use one preferred date format
+- A longer system prompt for synthesis, which explains how to convert all of these formats
+- A new subagent whose only job is to read the sources again and rewrite all of their dates
+? Deterministic normalization in code before reasoning is the pattern. External sources can't honor a requested format, prompts leave it to the model, and a subagent is disproportionate. Vague dates should be flagged rather than invented.
+
+@2.2|H
+A search tool returns "no results" for a very specific query. On the same day, the same tool times out on another. Which two statements describe how these should be treated?
++ The timeout is an access failure, which may justify a retry decision
++ The no-results response is a successful query, and is valid information
+- Both should be reported as errors, since neither one has returned any findings
+- Both should be reported as empty success, to keep the workflow from being interrupted
+- The no-results response should be retried until the query returns at least one result
+? Access failures and valid empty results are different, and need different handling. Treating them alike either hides failures or wastes effort, and retrying a valid empty result is pointless.
+
+@2.3|M
+The synthesis subagent has Task, WebSearch and all the document tools, added "for flexibility." It spends much of each run searching. What's the best fix?
++ Restrict its tools to those its role needs
+- Add "don't search" to its prompt, in capitals
+- Force its write tool on all turns with `tool_choice`
+- Raise its iteration cap so that it can finish searching
+? Agents misuse tools outside their specialization, so scoping fixes this. A prompt rule leaves the tool available, forcing every turn removes flexibility, and more iterations allow more of the wrong work.
+
+@2.4|H
+A shared MCP server gives the research subagents access to a licensed data feed, and requires an API key. Every developer needs the server, and each has their own key. How should it be configured?
++ In `.mcp.json`, using `${DATA_FEED_KEY}`, with each developer's key in their own environment
+- In each developer's `~/.claude.json`, because only user scope is able to hold credentials
+- In `.mcp.json`, with a single shared key committed, so that nobody has to configure anything
+- In the project's `CLAUDE.md`, with a note telling developers not to share their key values
+? Project scope shares the server, and environment variable expansion keeps secrets out of version control. User scope isn't required, committing keys is unsafe, and `CLAUDE.md` is committed text that doesn't configure servers.
+
+@5.3|H
+A search subagent's source is down, so it returns an empty result marked as success. The final report says, "no significant developments were found in this region." What's the best way to describe and correct this?
++ Silently suppressing the error misrepresents a failure, so return structured error context instead
+- The report's wording is too strong, so synthesis should be told to use more cautious language
+- The subagent behaved correctly, since a coordinator shouldn't be troubled by a temporary source failure
+- The whole run should terminate whenever a source is down, as partial reports can't be trusted
+? Returning empty results as success hides the gap and leads to a false conclusion. Softer wording doesn't reveal the failure, and terminating the entire workflow on one failure is also an anti-pattern.
+
+@5.6|H
+Analysis finds that two credible sources disagree on a key figure. The analysis subagent currently chooses one, then passes it on. How should it behave?
++ Complete its analysis with both values annotated, so that the coordinator decides how to reconcile them
+- Choose the value from the source that it considers the more reputable, then note that one was rejected
+- Stop its analysis, and return an error to the coordinator, because it can't proceed with conflicting data
+- Average the two values, and pass on the result with a note saying that it's an estimate
+? Analysis should include conflicting values with attribution, and let the coordinator decide. Silently resolving or averaging distorts the evidence, and stopping loses the rest of the analysis.
+
+#S4|Kestrel Tools builds an internal developer agent on the Claude Agent SDK. It helps engineers navigate a large multi-language codebase, understand legacy services, write boilerplate and automate repetitive changes. It uses the built-in tools (Read, Write, Edit, Bash, Grep, Glob) and several Model Context Protocol servers.
+
+@1.1|H
+To reduce tokens, a contributor changes the agent's loop to send the original task and only the newest tool result on each request. On multi-step tasks, the agent now re-reads files it has already read, and it sometimes contradicts its earlier conclusions. What explains this?
++ Each request has to carry the conversation, because the model only knows what it's sent
+- Sending one tool result at a time turns on a mode in which the model restarts the task
+- The model caches earlier turns on the server, and the partial history is corrupting that cache
+- Repeating steps is expected when a model uses more than a few tools during a single task
+? The API doesn't keep the conversation for you here, so history must be sent each time. Without it, the model has no record of what it did. The other options describe behavior that doesn't exist. Trimming results reduces tokens safely.
+
+@1.1|M
+In a trace, you see that the model asked for a Grep on `auth/` and a Read of `session.py` in one response. Your loop runs only the Grep, sends that back, and expects the model to ask for the Read again. How should the loop handle responses like this?
++ Run both, and return a `tool_result` for each, matched by ID, in the next user message
+- Run the first only, as the model can use just one result in each iteration of the loop
+- Send a separate user message for each result, with a model call between the two messages
+- Merge both results into a single text block, and add it to the system prompt of the next request
+? Every `tool_use` needs a matching `tool_result`, and they go back together. Skipping one breaks the exchange, a call in between leaves a result missing, and results don't belong in the system prompt.
+
+@1.3|H
+An agent has analyzed a service, and you now want one subagent to draft a migration and another to review its risks. The main agent's analysis is long, and only part of it matters to each. How should you pass context?
++ Include the relevant findings and the goal in each subagent's prompt
+- Rely on the subagents inheriting the main agent's analysis automatically
+- Have each subagent query the main agent's history when it needs to know more
+- Paste the entire raw conversation into each prompt, so nothing can be lost
+? Context must be explicit, and should be focused on what each subagent needs. There's no inheritance, or history query, and a raw transcript wastes context.
+
+@1.5|H
+A hook normalizes status values from an MCP tool. The tool's owner changes the format without notice, and values start passing through unconverted, confusing the agent. What practice would catch this soonest?
++ Tests on the hook, plus flagging of any unknown values as they appear
+- A monthly review of the agent's reasoning, on a sample of its conversations
+- Removal of the hook, because the model can handle most formats reasonably well
+- An instruction asking the model to report whenever it feels confused by its data
+? A hook is code, so test it and make unexpected input visible. A monthly sample is slow, removing the hook brings back the problem, and the model may not notice anything is wrong.
+
+@1.7|M
+You investigated a memory leak in a session and want to return to the same investigation tomorrow. How should you do that?
++ Name the session, and continue it with `--resume <session-name>`
+- Save the session as a skill, and invoke it tomorrow by running it again
+- Run `--history` with the name of the session you're looking to continue
+- Add the investigation's name to `CLAUDE.md`, so that it reloads tomorrow
+? Named resumption continues a specific prior conversation. The other options don't restore a conversation.
+
+@1.7|H
+A laptop crash interrupted an investigation of the build system. Since then, teammates have merged changes touching about half of the files that the session analyzed. An engineer asks whether to resume, or to begin a fresh session with a summary. Which factor should decide this?
++ How much of the prior context is still valid
+- Whether the session has a memorable name
+- How many tokens the session has used so far
+- Whether the model's version has been updated
+? The validity of the context drives the choice. A name only helps you find a session, and token use and model version don't tell you whether the results are still correct.
+
+@2.5|M
+You need all files whose names match `**/*Controller.java`. Which tool is the right fit, and why?
++ Glob, because it matches file paths by pattern
+- Grep, because it matches file names and contents
+- Read, because it can load a whole directory
+- Edit, because it uses unique text matching
+? Glob finds files by name or extension pattern. Grep searches contents, Read loads a file, and Edit modifies one.
+
+@2.5|H
+An agent runs `grep -r` through Bash for each question about the code, and its long output is filling the context. Which improvement is most reasonable?
++ Use the Grep tool with narrower patterns or paths, so that the output is focused
+- Use Write to save the output to a file, then read the whole file back afterward
+- Use Glob for content searches instead, as it generally returns many fewer results
+- Keep using Bash, and instruct the model to skim through the output more quickly
+? Focused searches limit what enters context. A file read back consumes the same space, Glob doesn't search contents, and skimming doesn't change what's in context.
+
+@2.5|M
+Which is the most efficient way for an agent to understand how a request flows through an unfamiliar service?
++ Find the entry point with Grep, then Read and follow imports to trace the flow
+- Read all of the files first, then form a view of how the service fits together
+- Read only the files with the largest sizes, because they hold most of the logic
+- Ask the model to describe how services of this type are usually structured
+? Incremental exploration builds understanding while conserving context. Reading everything exhausts it, file size isn't a guide, and general knowledge isn't this code.
+
+@2.1|H
+Agents keep misrouting between two MCP servers that both expose a `search` tool: one searches wiki pages, the other searches source code. Both are correctly configured. What's the best first fix?
++ Make each description state what it searches, and when to use the other
+- Move one server to user scope, as this lowers its priority during tool selection
+- Add a `CLAUDE.md` note saying that the second server is usually the better option
+- Disconnect one of the servers, as an agent can only use one of them at any one time
+? Tools from all servers sit together, so selection depends on descriptions. Scope doesn't set priority, a blanket note is wrong for many queries, and an agent can use several servers.
+
+@2.2|H
+Your subagent's file-fetch tool fails on a permissions error when it tries to read a restricted repository. How should it report this?
++ A permission error, not retryable, with a clear explanation of what couldn't be accessed
+- A transient error, retryable, in case the repository's permissions are changed in the near future
+- A validation error, asking the caller to correct the format of the repository's name and try again
+- An empty success result, since revealing that the repository exists could be a security problem
+? Retrying won't fix an access failure, and the caller must know that it didn't succeed. The category should match the cause, and consider what details to expose. Empty success hides the failure.
+
+@2.3|H
+A read-only `code-explorer` subagent has been given all 22 tools from every server, with a prompt telling it not to change anything. It occasionally edits files. Which option is the correct form of scoped access?
++ Give it only Read, Grep and Glob, plus any read-only MCP tools its role needs
+- Keep all 22 tools, and repeat the instruction not to change anything in capitals
+- Keep all 22 tools, and add a nightly check that reverts any edits that it makes
+- Pass it all the tools that the coordinator has, so that it can handle any request
+? Scoping limits what's possible. A prompt is only guidance, reverting acts after the fact, and passing everything down is the opposite of scoping.
+
+@2.3|M
+You need your agent to always call a tool rather than replying in text, and you don't mind which tool it picks. Which `tool_choice` setting fits?
++ `"any"`
+- `"auto"`
+- `{"type": "tool", "name": "search"}`
+- `{"type": "text"}`
+? `any` requires a tool and lets the model choose. `auto` allows text, a named tool chooses for the model, and the last isn't a guide option. *Build today: forced modes are rejected on some current models, so check the docs.*
+
+@2.4|H
+Agents waste many calls asking "which schemas exist?" before they write a query. Your database's schemas rarely change. Which two approaches reduce this, in line with the guide's recommendations?
++ Expose the schema catalog as an MCP resource
++ Let agents read the catalog first, then fetch only the relevant details
+- Add a prompt line telling agents to make fewer exploratory calls
+- Create a separate MCP tool for each table in the database
+- Raise the agents' iteration caps so that exploring costs less
+? Resources give agents visibility into what's available, so that they can fetch only what's needed. A prompt can't supply the missing information, one tool per table degrades selection, and higher caps don't reduce calls.
+
+@3.2|H
+A `/explore-options` skill generates a dozen candidate designs, most of which get rejected. Engineers notice that code written later in the same session drifts toward the rejected designs. Which change to the skill best addresses this?
++ Add `context: fork`, so that the exploration doesn't remain in the main conversation
+- Set `argument-hint` to "final only," so that rejected ideas are never generated
+- Add a closing instruction asking the model to forget all of the rejected ideas
+- Move the skill's text into `CLAUDE.md`, so that it's loaded in all the sessions
+? Isolation keeps exploratory content from influencing later work. `argument-hint` prompts for parameters, "forget" isn't reliable, and `CLAUDE.md` makes it worse.
+
+#S2|Granite Works has a large codebase maintained by several product teams. You use Claude Code for code generation, refactoring, debugging and documentation, and you're responsible for the team's `CLAUDE.md` files, custom commands and skills, and path-specific rules, and for guidance on using plan mode. Some sessions run for many hours across large parts of the code.
+
+@3.1|M
+Your root `CLAUDE.md` has grown to 1,100 lines covering testing, APIs and deployment. It's hard to maintain, and much of it is irrelevant to any given task. Which restructuring is best?
++ Split it into topic files in `.claude/rules/`, such as `testing.md` and `api-conventions.md`
+- Move it to `~/.claude/CLAUDE.md`, so that it's no longer in the repository taking up space
+- Copy it into each subdirectory, so that each team has its own complete version to maintain
+- Delete sections until it's much shorter, and rely on the developers to remember the rest
+? `.claude/rules/` organizes topics. User-level files aren't shared, copies drift, and deleting loses standards.
+
+@3.1|H
+Which two statements about the `CLAUDE.md` hierarchy are correct?
++ Instructions in `~/.claude/CLAUDE.md` aren't shared with teammates through version control
++ A `CLAUDE.md` in a subdirectory applies to work in that part of the codebase
+- Only one `CLAUDE.md` file can be loaded in any one session
+- User-level instructions override everything for all teammates
+- A project-level file applies only to the developer who wrote it
+? Those two are true. Several files can load, user files affect only that user, and project files are shared.
+
+@3.2|M
+Your team's `/changelog` command should be available to every developer on clone or pull. Where should it go?
++ `.claude/commands/`
+- `~/.claude/commands/`
+- The root `CLAUDE.md`
+- `.claude/config.json`
+? Project-scoped commands are shared through version control. The home directory is personal, `CLAUDE.md` isn't a command definition, and no such config file exists.
+
+@3.2|H
+Developers often run `/migrate-db` without saying which target version they want, and the skill then guesses. Which frontmatter helps?
++ `argument-hint`, to prompt for the required parameter
+- `context: fork`, to run the skill in an isolated context
+- `allowed-tools`, to limit the tools used during the skill
+- `paths`, to restrict the skill to the migrations directory
+? `argument-hint` prompts for required parameters. The others control context, tools or file matching.
+
+@3.3|M
+Conventions for test files should apply to all `*.test.tsx` files, wherever they are in the repo, and shouldn't load otherwise. Which configuration achieves this?
++ `.claude/rules/testing.md`, with `paths: ["**/*.test.tsx"]`
+- A `CLAUDE.md` file placed in every directory with a test
+- A root `CLAUDE.md` section, with a heading naming test files
+- A `/test-rules` command that developers run before each edit
+? Glob-scoped rules apply by file type regardless of location, and load only when relevant. Copies drift, the root file loads everywhere, and a manual command relies on memory.
+
+@3.4|H
+You're asked to restructure a monolith into services, with several workable boundaries. A colleague suggests starting direct execution on the "obvious" modules to build momentum. What's the best response?
++ Begin in plan mode to compare boundaries, then execute the plan that's agreed
+- Begin direct execution, and let the architecture emerge from what's learned along the way
+- Stay in plan mode throughout, because changes that large should never be made through Claude Code
+- Write the whole design in a long prompt, and have Claude execute it with no further exploration
+? Plan first for architectural decisions and several valid approaches, then execute. Starting direct risks costly rework, and plan mode isn't where the implementation stays. A long prompt skips exploration.
+
+@3.5|M
+You're adding request deduplication to a part of the platform you've never worked on, and you suspect there are failure modes you haven't thought of. Before any code is written, which technique best brings these considerations out?
++ Have Claude ask you questions before it starts implementing
+- Have Claude pick all the design parameters without discussion
+- Implement right away, then ask about any problems that come up
+- Paste a long article on deduplication, and ask for code based on it
+? The interview pattern surfaces considerations such as key design and failure modes before implementation.
+
+@3.5|H
+A data migration script mishandles nulls and empty strings, which are separate cases. What's the most effective way of communicating the required behavior?
++ Provide specific test cases, showing example input and the expected output for each
+- Ask Claude to handle edge cases more robustly, and to review the script more carefully
+- Add a note to `CLAUDE.md` saying that edge cases matter a great deal for this project
+- Describe the requirement again in a longer paragraph, repeating the most important points
+? Specific input and output pins down the behavior. General requests don't say what's wrong, and a `CLAUDE.md` note is too general for this bug.
+
+@5.4|H
+A coordinator running several agents crashes three hours into a long migration analysis. How should the design allow recovery without repeating the work?
++ Have each agent export its state to a known location, and load a manifest on resume
+- Keep all the state in the coordinator's conversation, then resume the conversation after the crash
+- Start the whole analysis again, since state from an interrupted run can't be trusted at all
+- Have each agent write a free-form summary to the logs, and read through them after the crash
+? Structured state exports and a manifest let the coordinator resume and inject state into agent prompts. Conversation state may be lost or stale, restarting wastes work, and free-form logs aren't reliably usable.
+
+@5.4|M
+You're mapping a large service, and verbose search output keeps crowding the main session. Which approach best keeps the main session focused on high-level understanding?
++ Spawn subagents for specific questions, such as "trace the refund flow's dependencies"
+- Paste all of the search output into a file, and read that file into the main session
+- Ask the main session to ignore any output that isn't relevant to the current question
+- Increase the maximum output tokens, so that the main session can hold more of the results
+? Subagents isolate verbose exploration, while the main agent coordinates. Reading the file brings the output back, ignored text still occupies context, and output limits don't add context.
+
+@5.4|H
+Late in a long session, Claude answers questions about a class by describing what such classes "usually" do, though it read the actual class earlier. Which two practices help?
++ Keep a scratchpad file of key findings, and refer to it for later questions
++ Delegate further verbose exploration to subagents that return summaries
+- Ask Claude to try to remember the class that it read earlier in the session
+- Re-read every previously read file, so that the facts are refreshed in context
+- Raise `max_tokens`, so that its responses contain more specific detail
+? Those are signs of context degradation, and scratchpads and subagents counter it. Asking it to remember doesn't restore detail, rereading everything crowds context further, and `max_tokens` limits only the reply.
+
+@5.1|M
+A long debugging session has been summarized twice, and you notice the summary now says "a performance issue in checkout," where it once had "p95 latency of 2,300 ms after the 14 June deploy." What's the underlying risk?
++ Progressive summarization condenses numbers and dates into vague statements
+- The session has reached the model's output limit, and the details have been cut off
+- Summaries can only retain text from the last few turns of the conversation
+- The latency details are being blocked by a rule in the project's `CLAUDE.md`
+? Progressive summarization loses specific values, so keep them in a persistent structured location. The other explanations don't match how summaries work.
+
+@5.1|H
+A subagent returns 8,000 words of reasoning to an orchestrating session with limited context, and the important facts are getting lost. What's the most effective upstream change?
++ Have the subagent return structured key facts and citations, rather than reasoning chains
+- Have the subagent return its output twice, once at the start and once at the end
+- Have the orchestrating session summarize each output with a one-line description
+- Have the subagent write in shorter sentences, while keeping all of the same content
+? Upstream agents should return structured data when downstream context is limited. Repeating adds to the load, a one-liner loses detail, and shorter sentences leave the volume in place.
+
+@5.6|M
+A long documentation session summarizes earlier findings, and links to the relevant source files start disappearing from later output. What should you require in the findings?
++ Structured claim-to-source mappings, preserved through each summary
+- A single list of files consulted, kept at the end of the document
+- A confidence rating for each of the claims in the documentation
+- A shorter summary, so that there's less text that could lose a link
+? Attribution is lost in summarization unless claim-source mappings are carried forward. A general list doesn't link claims to sources.
+
+@5.3|M
+A subagent exploring your repo can't read one submodule because of a permissions error, but it finishes everything else. What should it return?
++ Its results, plus what failed, what was attempted, and which areas weren't covered
+- Its results only, since one unreadable submodule isn't important enough to report
+- An error only, without its results, because partial results can't be trusted
+- An empty result, so that the main session can start the exploration over again
+? Propagate unresolved errors with what was attempted and partial results, so the main session can decide. Hiding the gap misleads, and discarding results wastes work.
+
+#S5|Vantage Retail runs Claude Code in CI/CD to review pull requests, generate test cases and post findings as inline comments. Developers can dismiss a finding, and they have complained about noise. You own the review prompts and the way findings are structured, and you want actionable feedback that the team will trust.
+
+@3.6|M
+Which command is most suitable for a pipeline that posts findings as inline PR comments?
++ `claude -p "Review this PR" --output-format json --json-schema "$SCHEMA"`
+- `claude "Review this PR" --output-format text`
+- `claude --resume review-job "Review this PR"`
+- `claude -p "Review this PR" --batch --ci-mode`
+? `-p` prevents an input hang, and JSON with a schema gives machine-parseable output. The second is interactive, the third resumes a session, and the last uses options that aren't real.
+
+@3.6|H
+Your job script needs Claude Code to review just the changes in the current pull request on each run, with no person present. How should the diff reach Claude Code?
++ Provide it in the `-p` prompt, or as piped context from the job script
+- Add it to `CLAUDE.md`, and commit that to the repo before each run
+- Rely on Claude's memory of the diff from the previous job's session
+- Open an interactive session, and paste it in through a remote terminal
+? Non-interactive input fits. The other options pollute the repo, assume memory across jobs, or need a person.
+
+@3.2|H
+Your review procedure is long, and is needed only in the review job. A teammate wants to add it to the root `CLAUDE.md`, so that it's always available. What do you recommend?
++ Keep it in a checked-in skill or command, invoked by the review job
+- Add it to `CLAUDE.md`, as team procedures should always be loaded in every session
+- Keep it on the CI runner's home directory, so that it's away from the application code
+- Paste it into each pull request's description, so that it's visible to the pipeline
+? On-demand, task-specific workflows suit skills, and a checked-in one is versioned and shared. `CLAUDE.md` loads it everywhere, a runner's home isn't versioned, and PR descriptions aren't a reliable source.
+
+@4.1|H
+Review output contains many style remarks along with real bugs. The prompt says to "report only important issues." Which rewrite is most likely to help?
++ List categories to report (bugs, security) and to skip (minor style, local patterns), with examples
+- Ask the model to report only those findings that it's at least 90% confident about
+- Say that important means anything a senior engineer would really care about
+- Add "be conservative" to the prompt, and repeat it at the end of the instructions
+? Specific categorical criteria beat general or confidence-based instructions, which don't define what should be reported.
+
+@4.1|M
+Two runs on the same code label one issue as "critical" and "minor" respectively. How should you make severity more consistent?
++ Define each severity level explicitly, with concrete code examples
+- Ask the model to think harder before it assigns a severity level
+- Remove severity from the output, and let developers decide on it
+- Run the review twice, then take the higher of the two severities
+? Explicit criteria with code examples give consistent classification. Asking for more thought doesn't define the levels, and the others avoid the problem.
+
+@4.2|H
+Findings have inconsistent shape: some give a location and fix, others a vague remark. Instructions alone haven't helped. What's the most effective addition?
++ Few-shot examples showing the format: location, issue, severity and suggested fix
+- A longer description of each output field, with more detailed prose explanations
+- A rule in capital letters saying that each finding must always contain a location
+- A second review pass that rewrites every finding after the first pass is complete
+? Few-shot examples are the most effective way to get consistently formatted, actionable output when instructions alone fall short.
+
+@4.2|H
+The review flags a harmless team pattern as a bug, but a similar-looking pattern really is a bug. You want it to tell them apart, including in new code. Which approach fits?
++ Add 2–4 examples showing each pattern, with the reasoning for why one is an issue
+- Add a list of every file where the harmless pattern appears, for the model to skip
+- Add a rule that all findings about this pattern should be suppressed in the reports
+- Add many examples of real bugs of other kinds, so that the model sees what bugs look like
+? Examples with reasoning distinguish acceptable patterns from real issues, and allow generalization. A file list doesn't generalize, and suppression would hide real bugs.
+
+@4.3|M
+Findings must fit a schema in which `suggested_fix` is required. For design-level concerns, where no single fix is obvious, the reviewer has started attaching weak or invented fixes, and developers are complaining about them. What should you change?
++ Make `suggested_fix` optional or nullable
+- Make the field longer, by raising its maximum
+- Add a validator that checks each fix compiles
+- Add "suggest the best fix you can" to the prompt
+? Required fields can pressure the model to fabricate. Nullable fields let it report that there's no clear fix.
+
+@4.4|H
+Developers dismiss many findings, but you can't tell which code constructs cause the false positives. What should you add to the structured findings?
++ A `detected_pattern` field, so that dismissals can be analyzed by the construct that triggered them
+- A `dismissed` field set by the model, based on whether it thinks a developer will dismiss the finding
+- A `confidence` field, so that any finding with a lower score is automatically hidden from developers
+- A free-text `notes` field, so that developers can explain each of their dismissals in their own words
+? Tracking which constructs trigger findings enables systematic analysis of dismissal patterns. A model can't report what developers later did, hiding by confidence isn't analysis, and free text is hard to aggregate.
+
+@4.4|M
+A structured review output passes schema validation, but references a line number that doesn't exist in the file. What kind of error is this, and how should it be handled?
++ A semantic error, which needs validation logic and a retry with the specific error
+- A syntax error, which can be fixed by adding stricter types to the JSON schema
+- A batch error, which can be fixed by resubmitting the request with its `custom_id`
+- A transient error, which can be fixed by retrying the same request several times
+? Schemas prevent syntax errors, not semantic ones. Checking the value needs code, and specific error feedback guides correction.
+
+@4.5|H
+A weekly security audit of all repositories is expensive with synchronous calls. Nobody waits on the results. What's the best change, and what should you keep in mind?
++ Use the Message Batches API for 50% savings, knowing that results can take up to 24 hours with no latency guarantee
+- Use the Message Batches API, since it guarantees that all of its results will be returned within one hour
+- Keep synchronous calls, as batch processing doesn't support any kind of code analysis work
+- Use the Message Batches API, along with mid-request tool calls to read each repository's files
+? Latency-tolerant work suits batches, with those limits. There's no one-hour guarantee, and batches don't support executing tools mid-request.
+
+@4.5|M
+Your team wants to move every Claude Code job to the Batches API to cut costs, including the pre-merge check that blocks developers. What's your advice?
++ Move the non-blocking jobs only, and keep the pre-merge check synchronous
+- Move all of the jobs, as batches almost always finish within a few minutes
+- Move none of the jobs, as a batch can't produce any structured output
+- Move the pre-merge check only, because it's where most of the cost lies
+? Batches have no latency guarantee, so blocking checks should stay synchronous. Nightly and weekly jobs can use them. Batches can return structured results.
+
+@4.6|H
+Which two approaches are most effective at catching subtle issues in code generated by Claude?
++ A second, independent Claude instance without the generator's reasoning context
++ Separate per-file passes, plus a cross-file integration pass on large changes
+- Asking the generating session to review its own work with more critical wording
+- Extended thinking in the generating session, so that it can reconsider its work
+- A rule that only those findings reported by three runs in a row are ever posted
+? Independent instances and multi-pass structure work well. A generating session keeps its own reasoning, so self-review and extended thinking are less effective, and requiring consensus suppresses real findings.
+
+@4.6|M
+You run a verification pass that has the model report its confidence alongside each finding. What's the appropriate use of this?
++ Routing findings for review, after calibrating against known results
+- Replacing all human review, as long as scores are above 90%
+- Discarding the findings that have low scores, without any checks
+- Treating the highest score as proof that the finding is accurate
+? Self-reported confidence can support calibrated review routing, but it isn't proof, and raw thresholds aren't reliable on their own.
+
+@4.6|H
+A pull request changes an API in one file and its callers in nine others. Per-file review passes all report no problems, but a caller is now passing the wrong argument type. What's missing?
++ A separate integration pass that looks at data flow across files
+- A longer prompt for each per-file review, asking it to look harder
+- A review of the largest changed files only, with greater depth
+- A second per-file pass, using exactly the same files and prompt
+? Per-file passes can't see contracts that span files, so an integration pass is needed. The other options stay within single-file views or skip files.

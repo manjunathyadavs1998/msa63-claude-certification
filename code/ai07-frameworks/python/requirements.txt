@@ -1,0 +1,2 @@
+langgraph==1.2.20
+llama-index-core==0.14.25

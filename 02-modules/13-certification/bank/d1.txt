@@ -1,0 +1,1093 @@
+@1.1|S1|E
+Your support agent's loop must decide whether to run another iteration. Which signal should control this?
++ The `stop_reason` field on each response
+- Whether the reply contains the word "done" or "finished"
+- Whether the response contains any assistant text at all
+- A fixed count of five iterations for every request
+= `stop_reason` is the API's explicit signal: continue on `tool_use`, stop on `end_turn`. Parsing words is unreliable, text can accompany tool calls, and a fixed count ignores what the task needs.
+
+@1.1|S1|E
+A response arrives with `stop_reason: "tool_use"`. What should your loop do next?
++ Run the requested tools, append the results to the history, and send another request
+- Return the response text to the customer, because a tool call means the turn has ended
+- Start a new conversation containing only the tool output, to keep the context small
+- Ask the model in a follow-up message whether it really wants the tool to run
+= `tool_use` means the model is waiting for results. They're appended to the conversation so it can reason about its next step. Ending there drops the work, a fresh conversation loses context, and asking for confirmation adds a pointless round trip.
+
+@1.1|S3|E
+What does `stop_reason: "end_turn"` tell the coordinator's loop?
++ The model has finished its turn, so the loop can terminate
+- The model has hit its token limit and needs a follow-up request
+- A tool failed, and it should be retried before continuing
+- The conversation history has grown too large to continue with
+= `end_turn` is the normal completion signal. Token exhaustion has its own stop reason, tool failures come back as tool results, and history size isn't reported this way.
+
+@1.1|S4|M
+A developer's loop stops as soon as a response contains any text block. Users report that the agent quits halfway through tasks. What's the cause?
++ Claude can emit explanatory text alongside tool calls, so text doesn't indicate completion
+- Claude returns text only when it has failed, so the loop is detecting real errors correctly
+- Text blocks consume the token budget, so the model is ending its own turn early
+- The SDK removes tool calls from any response that contains a text block
+= A response can contain text and `tool_use` blocks together, such as "Let me check that file." Checking for text is a named anti-pattern. Only `stop_reason` reliably signals completion. The other options describe behavior that doesn't exist.
+
+@1.1|S1|M
+An engineer's loop checks whether the assistant's text includes "I have completed your request." What's the main problem with this design?
++ It relies on natural language, which can vary or be missing, to control the program's flow
+- It uses too many tokens, because the string comparison adds to each request's input
+- It prevents tool results from being appended to the history between iterations
+- It only works with streaming responses, and not with standard requests
+= Parsing natural language to decide termination is an anti-pattern, since wording isn't guaranteed. String checks don't cost tokens, don't affect history, and have nothing to do with streaming.
+
+@1.1|S3|M
+A team sets `max_iterations = 3` as its loop's main stopping rule, and research tasks now end with half-finished reports. What should change?
++ End on `stop_reason`, and keep any cap only as a safety limit
+- Raise the cap to 30 and continue to treat reaching the cap as the normal way to finish
+- Ask the model to complete all of its research within three turns, using the system prompt
+- Remove the tool results from history so that each of the three iterations can do more
+= An arbitrary cap as the primary stop cuts off legitimate work. A cap is fine as a safeguard against runaway loops, but the model's `stop_reason` should end normal runs. A bigger cap keeps the same flaw, and removing history breaks reasoning.
+
+@1.1|S1|M
+After a tool runs, where do its results go so the model can use them?
++ In a `tool_result` block in the next user message
+- In the system prompt of the next request, replacing whatever was there before
+- In a separate API call that registers results before the next message is sent
+- In the assistant's turn, appended after the original `tool_use` block
+= Tool results are returned as `tool_result` blocks in the conversation history, tied to the `tool_use` block. The system prompt isn't for this, no registration call exists, and results aren't written into the assistant's turn.
+
+@1.1|S4|M
+Your loop sends only the latest tool result in each request, to save tokens. The agent keeps repeating earlier steps. Why?
++ The API is stateless, so the model sees only what's sent, and it has forgotten earlier steps
+- The model caches earlier turns on the server, and the partial history is corrupting that cache
+- Repeating steps is expected behavior whenever a model uses more than three tools
+- Sending one tool result at a time turns on a mode that restarts the task
+= Each request must carry the full conversation for continuity. Without earlier turns, the model has no record of what it did. There's no server-side conversation memory here, and no special restart mode.
+
+@1.1|S1|H
+Which statement best contrasts model-driven decisions with a pre-configured decision tree in an agent?
++ Model-driven: Claude picks the next tool from context. Tree: branches are fixed
+- In model-driven loops, Claude follows a fixed order; a tree allows the order to change at runtime
+- Both are equivalent as long as the tools have good descriptions and strict schemas
+- A decision tree always uses fewer tokens and is therefore more accurate for ambiguous requests
+= The agentic loop lets Claude reason about what to call next using new information. Decision trees pre-define paths, which helps with fixed rules but handles ambiguity poorly. Good descriptions don't make these the same, and token use doesn't settle accuracy.
+
+@1.1|S1|H
+A refund agent must handle unpredictable customer requests, though identity verification must always happen before refunds. Which design fits best?
++ A model-driven loop, with a code gate enforcing verification
+- A fixed decision tree covering every request type that you can think of in advance
+- A model-driven loop, with a firmly worded prompt requiring verification before any refund
+- Separate agents for each request type, each one with a fixed sequence of three tools
+= Ambiguity suits model-driven reasoning, and a hard rule suits code. Trees can't cover open-ended requests, a prompt alone has a non-zero failure rate, and fixed per-type agents lose flexibility.
+
+@1.1|S3|M
+A coordinator's response has two `tool_use` blocks. How should your loop return results?
++ Run both, and return a `tool_result` for each, matched by ID, in the next user message
+- Run only the first tool, since the model can use just one result in each turn
+- Send a separate user message for each result, with a model call between them
+- Merge both outputs into one text block in the system prompt of the next request
+= Every `tool_use` needs a corresponding `tool_result`, matched by ID, and they go back together. Dropping one breaks the exchange, separate model calls add turns, and results don't belong in the system prompt.
+
+@1.1|S4|E
+Which is a correct description of a single iteration of the agentic loop?
++ Send the request, inspect `stop_reason`, execute any tools, and append the results
+- Execute all tools, send the request, parse the text, and delete the older results
+- Inspect the text, choose a tool in your own code, and then send the request
+- Send the request, wait for a webhook, and then read the results from a queue
+= That's the lifecycle: request, check `stop_reason`, run requested tools, add results, repeat. The model requests tools, so your code doesn't choose them, and no webhook is involved in the standard loop.
+
+@1.1|S1|H
+An agent's loop runs correctly, but it sometimes acts on an outdated order status after a tool result was silently dropped by a filter. What does this show most directly?
++ The model reasons only from what's in the conversation, so a missing result leaves it working on old information
+- The model automatically retrieves current data from the server, so the filter must have broken that sync
+- The `stop_reason` was wrong, and it should have returned `tool_error` for the dropped result
+- The issue can only be solved by raising the iteration cap, so the model has time to recheck
+= Tool results reach the model only through history. If they aren't appended, it can't incorporate them. There's no automatic data sync, no `tool_error` stop reason in this flow, and more iterations wouldn't restore lost data.
+
+@1.1|S3|M
+Your loop treats an empty text response as the signal that work is finished. What's likely to go wrong?
++ A turn can hold only `tool_use` blocks, so work may remain
+- Empty responses always raise exceptions, so that code path could never actually execute
+- Claude always includes text with its final answer, so the check would never fire at all
+- Empty text means the model refused, so this would hide safety issues in production
+= A tool-only turn has no text but isn't finished. Checking for text in either direction is an anti-pattern. Empty content isn't automatically an exception or a refusal.
+
+@1.1|S1|E
+Which of these is an anti-pattern for ending an agentic loop?
++ Parsing the reply for "all done"
+- Continuing when `stop_reason` is `tool_use`
+- Stopping when `stop_reason` is `end_turn`
+- Appending tool results before the next request
+= Parsing natural language is the anti-pattern. The other three describe correct loop behavior.
+
+@1.1|S4|H
+A loop has a hard limit of 50 iterations that's almost never reached. When it is reached, it logs an alert and stops. How should an architect judge this?
++ It's reasonable, since it's a safety limit and `stop_reason` still ends normal runs
+- It's an anti-pattern, as every iteration cap in an agent is forbidden
+- It's the primary stopping mechanism, so it must be lowered to about 5 to be safe
+- It's unnecessary, because the API automatically stops agents at 50 turns on its own
+= The anti-pattern is an arbitrary cap as the *primary* stop. A high limit that guards against runaway behavior is sensible. Lowering it would cut off real work, and the API doesn't impose this limit.
+
+@1.1|S1|M
+A tool fails with a timeout. How should the loop report this so the model can decide what to do?
++ Return a `tool_result` describing the failure, then keep looping
+- Stop the loop immediately and return a generic apology to the customer
+- Omit the failed tool's result, since the model only needs successful results
+- Retry forever inside the tool, and never return to the model until it works
+= Returning the failure as a tool result lets the model adapt. Stopping wastes the session, omitting a result breaks the `tool_use`/`tool_result` pairing, and infinite retries hang the system.
+
+@1.1|S3|H
+A team replaces its agent loop with a script that always calls search, then fetch, then summarize. Simple questions now get worse answers and waste tool calls. Why?
++ A fixed sequence can't skip or adapt its steps to the question
+- Scripts can't call tools at all, since only the model is able to execute them
+- The summarizer depends on `end_turn`, which is never emitted when a script runs tools
+- Fixed sequences always exceed token limits, so results are truncated by the API
+= Fixed pipelines suit predictable work, while this task varies. Scripts can call tools, `end_turn` isn't related, and sequences don't inherently exceed limits.
+
+@1.1|S1|M
+Select the two practices that make an agentic loop correct.
++ Continue while `stop_reason` is `tool_use`
++ Append tool results to the history before the next request
+- End the loop as soon as any assistant text appears
+- Treat a fixed iteration count as the normal end of a run
+- Discard prior turns once a tool has returned, to keep requests small
+= Those two are the core of the loop. Text isn't a completion signal, a fixed count is an anti-pattern as the primary stop, and discarding turns removes what the model needs for reasoning.
+
+@1.1|S4|H
+Select the two statements that explain why text checks are unreliable as completion signals.
++ Claude may write text and also request tools in the same response
++ A completed answer's wording varies, so no phrase can be relied on
+- Text blocks are charged at a higher rate, which distorts the check
+- Text blocks are returned only when streaming, and not otherwise
+- The API encrypts assistant text until the final turn has been sent
+= Text can accompany tool calls, and wording isn't fixed. Pricing, streaming and encryption claims here are false.
+
+@1.2|S3|E
+In a hub-and-spoke multi-agent system, how do the subagents communicate with each other?
++ Through the coordinator, which routes all information between them
+- Directly, with each subagent calling the others as it needs them
+- Through a shared memory that every subagent can read automatically
+- Through a shared conversation history inherited from the coordinator
+= All inter-subagent communication goes through the coordinator, for observability, consistent error handling and controlled flow. Subagents have isolated contexts, so neither shared memory nor inherited history applies by default.
+
+@1.2|S3|E
+What do subagents automatically inherit from the coordinator's conversation?
++ Nothing: their context must be explicitly provided
+- The full message history, up to the point of spawning
+- The system prompt and the last ten messages
+- All of the tool results, but none of the reasoning
+= Subagents run with isolated context. Whatever they need has to go in their prompt.
+
+@1.2|S3|M
+A search subagent keeps finding sources that another subagent has already covered, which wastes budget. What's the best first fix?
++ Have the coordinator assign distinct subtopics or source types
+- Let the subagents message each other directly to compare their results as they go
+- Add a deduplication service in front of the search tool, and cache every query
+- Reduce the number of subagents to one, so that duplication can't happen at all
+= Assigning distinct subtopics or source types prevents overlap at the source, which is the coordinator's job. Direct messaging breaks hub-and-spoke, a dedupe service treats a symptom, and one agent loses parallel coverage.
+
+@1.2|S3|M
+For the query "What's the capital of Australia?", your research system still runs search, analysis, synthesis and report agents. What should change?
++ The coordinator should analyze the query and invoke only the subagents it needs
+- The search subagent should be given a shorter timeout for simple factual queries
+- The report agent should detect simple questions, and shorten its output format
+- Every query should pass through the full pipeline, to guarantee consistent quality
+= Coordinators should select subagents dynamically according to complexity. The other options leave the wasteful pipeline in place.
+
+@1.2|S3|H
+Every subagent reports success, yet a report on "renewable energy" covers only solar. Logs show the coordinator asked for "solar panel efficiency" and "solar costs." Where's the root cause?
++ The coordinator's decomposition was too narrow, so the fix belongs there
+- The synthesis agent should have added wind and hydro from its own knowledge
+- The search agent's queries were too short, so its tool needs a longer description
+- The report agent should reject any report that covers fewer than three sources
+= The subagents did what they were asked. Overly narrow decomposition is the coordinator's failure. Fixing downstream agents treats a symptom, and synthesis shouldn't invent unresearched content.
+
+@1.2|S3|M
+Why route all subagent communication through the coordinator?
++ It gives observability, consistent error handling, and controlled information flow
+- It reduces total token use, since subagents no longer need to receive any prompts
+- It's the only way that the API allows two agents to exchange data with each other
+- It removes the need for subagents to have their own tools or system prompts
+= Those are the stated reasons. It doesn't remove prompts or tools, and it's an architectural choice rather than an API restriction.
+
+@1.2|S3|H
+After synthesis, the coordinator finds that the draft has no coverage of regulation. What's the best next step?
++ Re-delegate targeted queries on regulation to search and analysis, then re-invoke synthesis
+- Accept the draft, since all the subagents have reported that they completed successfully
+- Ask the synthesis agent to write the regulation section from its general knowledge
+- Restart the entire pipeline from scratch, with the same queries and same subagents
+= That's an iterative refinement loop: evaluate gaps, target more research, and resynthesize until coverage is sufficient. Accepting leaves the gap, general knowledge loses citations, and a full restart repeats the same narrow work.
+
+@1.2|S3|M
+Which responsibility belongs to the coordinator?
++ Decomposing the task, delegating, and aggregating the results
+- Performing every web search to avoid spawning any subagents
+- Rendering the final PDF output and managing its storage
+- Sharing its memory automatically with each spawned subagent
+= Coordination covers decomposition, delegation, aggregation, and deciding which subagents to invoke. Doing all searches itself defeats delegation, and memory isn't shared automatically.
+
+@1.2|S3|E
+Which risk comes from overly narrow task decomposition?
++ Incomplete coverage of broad topics
+- Too many duplicate tool definitions
+- Faster but more expensive subagents
+- Loss of the `custom_id` correlation field
+= Narrow subtasks miss parts of a broad question. The other options aren't consequences of decomposition width.
+
+@1.2|S4|M
+A coding assistant's documentation subagent needs facts found by its analysis subagent. An engineer proposes letting the documentation agent read the analysis agent's history. What's better?
++ The coordinator passes the findings in its prompt
+- Merge the two subagents' conversation histories into one on every turn
+- Have the analysis agent write its entire transcript into the system prompt
+- Set a configuration flag so that the two subagents share a memory space
+= Information should flow through the coordinator, explicitly. Merging histories breaks isolation, whole transcripts waste context, and that shared-memory flag isn't a feature.
+
+@1.2|S3|H
+A coordinator runs three research subagents with identical instructions, hoping for broader coverage, and receives near-duplicate results. What's the root cause?
++ Scope wasn't partitioned, so each agent explored the same space
+- The subagents' context is too isolated, so they need to share a history
+- The synthesis agent isn't deduplicating, so it needs a stricter prompt
+- Three is too few, so more subagents would naturally diversify the results
+= Parallelism only adds coverage when work is partitioned. Sharing history wouldn't fix the assignments, dedup comes too late, and more identical agents make more duplicates.
+
+@1.2|S3|H
+The synthesis subagent's output contradicts one source, and you want to investigate. In a hub-and-spoke design, what makes this easiest?
++ All exchanges pass through the coordinator, so one place shows them
+- Each subagent stores its private notes in a hidden directory for later reading
+- The final report's text includes a transcript of every model call
+- Subagents can be asked afterward what they remember about the earlier run
+= Central routing provides observability. Hidden notes and transcripts in the report aren't part of the pattern, and a subagent retains no memory between invocations.
+
+@1.2|S3|M
+When should the coordinator stop its iterative refinement loop?
++ When coverage meets its stated quality criteria
+- As soon as the first synthesis draft has been returned
+- After exactly five rounds, regardless of what's been found
+- When a subagent reports that it would like to stop
+= Refinement continues until coverage is sufficient. Stopping at the first draft skips evaluation, a fixed count ignores quality, and a subagent's preference isn't the criterion.
+
+@1.2|S1|M
+A support coordinator delegates to billing and shipping subagents. The billing agent hits an unrecoverable error. Which design gives the most consistent handling?
++ The billing agent reports the failure, and the coordinator decides
+- The billing agent directly tells the shipping agent to stop its work
+- Each subagent handles every failure independently and never reports back
+- The coordinator is bypassed so that the customer gets the raw error faster
+= Coordinators own error handling and routing. Peer signaling breaks the pattern, silent handling hides failures, and bypassing exposes raw errors.
+
+@1.2|S3|H
+You're adding a fact-checking subagent. Which change respects the coordinator pattern?
++ The coordinator invokes it when needed and passes its findings to other agents
+- The synthesis agent spawns and manages it directly, without the coordinator knowing
+- It subscribes to all subagent conversations so it can check facts as they happen
+- It replaces the coordinator as the hub whenever facts are being checked
+= New capabilities plug in through the hub. Hidden spawning and subscriptions bypass controlled flow, and swapping the hub creates confusion.
+
+@1.2|S3|M
+A coordinator always invokes four subagents in the same order. What does this suggest?
++ It's acting as a fixed pipeline and isn't selecting agents by query requirements
+- It's correctly implementing dynamic selection, as the order never changes
+- It should be replaced by agents that communicate with each other directly
+- The subagents should each decide independently whether they ought to run
+= Coordinators should analyze requirements and pick agents dynamically. A fixed order isn't dynamic, and peer or self-selection removes central control.
+
+@1.2|S3|E
+Which is a good way of partitioning a research topic across subagents?
++ Give each one a distinct subtopic or source type
+- Give each one the same full topic and hope they differ
+- Give each one a different temperature setting
+- Give each one the same sources in a different order
+= Distinct assignments minimize duplication. The others invite overlap.
+
+@1.2|S4|H
+Select the two reasons why subagents having isolated context is useful.
++ Verbose exploration stays out of the coordinator's context
++ Each subagent can focus on its task without unrelated history
+- It lets subagents read each other's memory more quickly
+- It removes any need to pass findings in their prompts
+- It guarantees each subagent will produce identical output
+= Isolation protects the main context and keeps focus. It doesn't give shared memory, it increases the need for explicit context, and it doesn't make outputs deterministic.
+
+@1.2|S3|H
+Select the two signs that a report's coverage gap comes from the coordinator's decomposition rather than from the subagents.
++ The delegation prompts never mentioned the missing subtopic
++ The subagents completed what they were assigned, and did it correctly
+- The final report's formatting differs from the agreed template
+- The search tool occasionally returned transient timeout errors
+- The synthesis agent used a shorter prompt than the others did
+= If the assignments omit a topic and the work assigned is done well, the fault lies in the decomposition. Formatting and tool blips don't explain a missing subtopic.
+
+@1.2|S3|M
+A team wants subagents to ask each other questions directly because "the coordinator is a bottleneck." What should the architect weigh first?
++ Direct links lose central observability, so measure first and try scoped tools
+- Direct links have no real downside, so they should be used for all agent communication
+- The coordinator can't be a bottleneck, as coordinators don't use any model calls
+- Peer communication is required by the API once there are more than three subagents
+= Hub-and-spoke buys observability and control, at a real latency cost. Addressing a high-frequency need with scoped tools is the proportionate response. The other claims are false.
+
+@1.3|S3|E
+A coordinator can't spawn subagents, even though they're defined. What's the first configuration check?
++ Whether `allowedTools` includes "Task"
+- Whether `stop_reason` is set to "Task"
+- Whether the subagents share its history
+- Whether the model supports forked sessions
+= Task is the spawning mechanism, and it must be allowed for the coordinator. `stop_reason` isn't configured, and the others aren't prerequisites. *Build today: Claude Code docs name this tool Agent, with `Task` kept as an alias. The exam guide uses Task.*
+
+@1.3|S3|E
+Which tool does the guide describe as the mechanism for spawning subagents?
++ Task
+- Fork
+- Spawn
+- Delegate
+= The guide names the Task tool. The others aren't the spawning tool it describes.
+
+@1.3|S3|M
+A synthesis subagent writes reports with no citations, though the search agent had found good sources. What's the most likely cause?
++ The findings and their sources weren't included in the synthesis agent's prompt
+- The synthesis agent's system prompt is too long for it to process citations well
+- Subagents can only cite sources they've found themselves, using their own tools
+- The search agent's memory expired before the synthesis agent was able to read it
+= Subagents receive only what's explicitly passed. Complete findings with their sources must be in the prompt. Nothing here depends on prompt length, self-found sources or expiring shared memory.
+
+@1.3|S3|M
+How should the coordinator pass web results and document analysis to the synthesis agent?
++ Include the complete findings directly in the synthesis subagent's prompt
+- Tell it which agents ran, so that it can query their conversation histories
+- Provide only a one-line summary, and let it search again for the details
+- Rely on the shared memory that's created between invocations in a session
+= Complete prior findings go in the prompt. Subagents can't query another's history, a one-liner loses details, and memory isn't shared.
+
+@1.3|S3|M
+Why use structured data when passing findings between agents?
++ It separates content from metadata such as URLs, so attribution survives
+- It's the only input format that subagent prompts are able to accept
+- It lets the model skip reading the text, which reduces its token use
+- It automatically verifies that each of the cited claims is accurate
+= Structured formats keep content and metadata like source URLs, document names and page numbers distinct. Prompts accept text too, the model still reads it, and structure doesn't verify truth.
+
+@1.3|S3|M
+You want three search subagents to run in parallel. How should the coordinator do this?
++ Emit multiple Task calls in one response
+- Emit one Task call per turn, for three turns
+- Set a `parallel: true` flag on the system prompt
+- Start three separate coordinators with one task each
+= Multiple Task calls in a single response run in parallel. Separate turns run them sequentially, that flag doesn't exist, and multiple coordinators lose central control.
+
+@1.3|S3|H
+A coordinator's prompt lists twelve exact steps for each search subagent. Results are poor when sources differ from what was expected. What's better?
++ Specify research goals and quality criteria, so that subagents can adapt
+- Add a thirteenth step, describing what to do when a source is unexpected
+- Use forced tool choice for every step, so that the order can't change
+- Replace the subagents with one agent, following the same twelve steps
+= Goals and criteria enable adaptation, while procedures break when reality differs. More steps or forced tools make it more rigid.
+
+@1.3|S3|M
+What belongs in an `AgentDefinition`?
++ A description, a system prompt, and tool restrictions
+- The coordinator's complete conversation history to date
+- The API key and the billing account for each subagent
+- A list of all the other subagents' memory locations
+= Those are the configured parts. History isn't inherited, billing isn't part of it, and there's no such shared memory.
+
+@1.3|S4|M
+An agent should explore two migration approaches from the same analysis, without one affecting the other. What fits?
++ Fork-based sessions from the shared analysis baseline
+- One session in which both approaches are tried alternately
+- A new blank session for each approach, with no prior context
+- Two subagents sharing one memory file that both can overwrite
+= Forking gives independent branches from one baseline. A single session mixes them, blank sessions lose the analysis, and a shared writable file couples them.
+
+@1.3|S3|H
+A review of subagent output shows statements like "the report says" with no way to find which report. What should the prompt require?
++ Structured output with each claim's source document, page and URL as separate fields
+- Longer prose, so that each paragraph can describe sources in greater detail
+- A closing bibliography, listing each source that was consulted during the task
+- A confidence score for each claim, as reported by the subagent itself
+= Claim-level metadata preserves attribution. Prose and bibliographies don't map claims to sources, and self-reported confidence doesn't help trace them.
+
+@1.3|S3|E
+Do subagents share memory between invocations by default?
++ No: each invocation needs its context in the prompt
+- Yes: the last run's context is restored automatically
+- Yes, as long as they have the same `AgentDefinition`
+- Only when they're run in the same parallel batch
+= There's no automatic shared memory. Context has to be passed explicitly.
+
+@1.3|S3|H
+A synthesis agent's definition allows Task, WebSearch and all document tools "for flexibility." It starts researching rather than synthesizing. What's the fix?
++ Restrict its tools to those its role needs, with goals in its prompt
+- Add "do not search" to its prompt, and keep its tools as they are
+- Give the search agent an instruction to run before synthesis does
+- Increase its iteration cap, so that it can finish searching and then write
+= Tool restrictions in `AgentDefinition` prevent misuse. Prompt-only limits are probabilistic, and the other two ignore the cause.
+
+@1.3|S4|M
+A subagent needs the project's coding conventions, which the coordinator knows. How does it get them?
++ They're included in the subagent's prompt by the coordinator
+- It inherits them from the coordinator's history automatically
+- It asks the coordinator in mid-run through a shared channel
+- It can't receive them, because subagents only use their tools
+= Explicit context passing is the rule. There's no inheritance or standard mid-run channel for this, and prompts can carry whatever's needed.
+
+@1.3|S3|H
+A coordinator summarizes findings to "keep prompts small" before passing them to synthesis. Numbers and sources go missing from reports. What's the better trade-off?
++ Pass structured findings containing the facts and sources, and drop verbose reasoning
+- Pass the shortest summary possible, and ask synthesis to re-derive the numbers
+- Pass all the raw transcripts, because more text always gives more accurate reports
+- Pass nothing, and let the synthesis agent perform the entire search again itself
+= Keep what downstream needs: facts, citations, metadata. Remove reasoning chains and noise. The extremes either lose data or waste context.
+
+@1.3|S3|M
+You spawned parallel subagents across three separate coordinator turns. What's the effect?
++ They ran sequentially, adding latency
+- They ran in parallel, as it's the same
+- They shared one context across the turns
+- They failed, as turns can't contain Task calls
+= Parallel spawning requires multiple calls in a single response. Separate turns wait for each result.
+
+@1.3|S3|H
+A subagent's prompt says only: "Now write the summary based on what we found." What's wrong?
++ "What we found" means nothing to it, since it has no access to prior context
+- The sentence is too short, as subagent prompts have a minimum required length
+- It should be phrased as a list of steps, as only step lists are valid in prompts
+- It needs a forced `tool_choice` before it can write any free-form summary
+= The subagent has no shared history, so references to earlier work are empty. Findings must be included. The other reasons aren't real requirements.
+
+@1.3|S4|M
+Which prompt gives a code-exploration subagent the best chance to adapt?
++ "Find how refunds flow; report entry points and dependencies, with paths."
+- "Open a.java, then b.java, then c.java, then stop and print the contents of each."
+- "Use Grep five times exactly, then Read twice, then return one sentence at the end."
+- "Do whatever seems useful for a while, and report back whenever it seems appropriate."
+= It states a goal and quality criteria for the output. Procedures are brittle, and a vague brief gives no criteria.
+
+@1.3|S3|M
+A team wants attribution through a chain of search, analysis and synthesis. What should each step's output preserve?
++ A claim-to-source mapping that each later step carries forward
+- A single overall summary of what sources were consulted
+- A link to the coordinator's logs for use in later auditing
+- The name of the model that generated each of the paragraphs
+= Claim-source mappings survive only if they're carried and merged explicitly. A general summary or log link doesn't map claims to sources.
+
+@1.3|S3|H
+Select the two things a coordinator needs in order to spawn a synthesis subagent that uses earlier research.
++ "Task" in the coordinator's `allowedTools`
++ The research findings placed in the subagent's prompt
+- A `--resume` of the search agent's session
+- The coordinator's history copied to shared memory
+- `tool_choice` set to "any" on the coordinator
+= Spawning needs Task allowed, and the subagent needs explicit context. The rest aren't requirements for spawning.
+
+@1.3|S4|H
+Select the two uses for fork-based session management.
++ Comparing two refactoring approaches from one analysis
++ Trying two testing strategies without cross-contamination
+- Passing context to subagents more cheaply than prompts do
+- Making a session survive after its context window is full
+- Running the same task for a guaranteed identical result
+= Forks are for divergent exploration from a shared baseline. They aren't a context-passing, capacity or determinism mechanism.
+
+@1.3|S3|M
+Which brings the most value when a subagent's job is to synthesize across twenty findings?
++ Each finding delivered with its source, date and key data as fields
+- Each finding delivered as a long narrative with reasoning included
+- A pointer to the search agent, so that it can ask about each finding
+- The coordinator's interpretation of the findings, and no originals
+= Structured facts with metadata support accurate synthesis. Narratives dilute context, pointers don't work across isolated contexts, and interpretation alone loses the originals.
+
+@1.3|S3|E
+Which of these does the guide list as part of `AgentDefinition`?
++ Tool restrictions
+- Billing limits
+- Network routes
+- Tokenizer choice
+= Definitions include descriptions, system prompts and tool restrictions.
+
+@1.4|S1|E
+A compliance rule says that identity must be verified before any financial operation. Which control gives a deterministic guarantee?
++ A programmatic gate that blocks the refund tool until verification has succeeded
+- A system prompt that says, in strong words, that verification must come first
+- Few-shot examples which show the agent verifying customers before it refunds
+- A post-hoc weekly report listing refunds that had no verification step
+= Programmatic enforcement is deterministic. Prompts and examples have non-zero failure rates, and a report acts after the fact.
+
+@1.4|S1|M
+An agent's system prompt requires `get_customer` before `process_refund`. It complies 98% of the time. Why isn't that enough for this rule?
++ Prompt guidance has a non-zero failure rate, and each failure here moves real money
+- 98% is below the threshold at which the API enforces tool order on its own
+- It's good enough, since all software has bugs and 2% is within normal tolerance
+- The other 2% could be fixed by repeating the instruction three times in the prompt
+= When compliance must be guaranteed, probabilistic instructions fall short. No API threshold exists, and repetition still leaves a failure rate.
+
+@1.4|S1|M
+How should a prerequisite gate for `process_refund` decide that it can proceed?
++ It checks that `get_customer` returned a verified customer ID in this session
+- It asks the model whether it believes that the customer has now been verified
+- It checks that the word "verified" appears in the customer's latest message
+- It waits ten seconds, to give the verification tool enough time to complete
+= The gate relies on actual tool results, in code. Asking the model, reading customer text (which anyone can type), or waiting doesn't prove verification.
+
+@1.4|S1|M
+A case is escalated mid-process to a human agent who can't see the transcript. What should the handoff contain?
++ Customer ID, root cause, refund amount, and the recommended action
+- The full raw transcript, so the human can find whatever they need
+- A short note saying the customer needs help, with their name only
+- The model's confidence score, plus the number of turns so far
+= A structured summary gives the essentials to someone who can't see the transcript. A raw dump is slow to read, a vague note forces repeated questions, and a score doesn't help them act.
+
+@1.4|S1|M
+A customer writes: "My order is late, I was double-charged, and my address is wrong." How should the agent handle it?
++ Separate the concerns, investigate each with shared context, then give a unified resolution
+- Handle only the first concern, then ask the customer to open tickets for the others
+- Escalate at once, since requests with three concerns are too complex for an agent
+- Treat it as one issue, and pick whichever tool seems to be most relevant overall
+= Multi-concern requests are decomposed, investigated (in parallel where possible), and synthesized. The other options leave issues unresolved or escalate unnecessarily.
+
+@1.4|S1|H
+Which pair is best matched?
++ Tone of the reply: prompt guidance. Refund limits: programmatic enforcement
+- Tone of the reply: a hook. Refund limits: a few-shot example in the prompt
+- Tone of the reply: a gate. Refund limits: a polite line in the system prompt
+- Both of them: strongly worded system prompt rules, with capitalized text
+= Judgment-style behavior suits prompts, and guaranteed rules suit code.
+
+@1.4|S1|H
+Logs show that when a customer states "I already verified with your colleague," the agent sometimes skips `get_customer`. What's the right fix?
++ Gate downstream tools in code on a real verification result
+- Tell the model that customers sometimes lie, and to be more careful
+- Add sentiment analysis, to detect customers who may be manipulating it
+- Log the event and rely on human review for unusual conversations
+= Customer text can influence a prompt-based rule, and a gate can't be talked around. The others lower probability or react later.
+
+@1.4|S1|E
+What's the main purpose of a structured handoff summary?
++ Humans can act with no need for the transcript
+- It lowers the model's token use on the next turn
+- It's needed by the API before calling a human tool
+- It lets the agent restart itself in another session
+= Recipients often lack the conversation. A summary gives them what they need to act.
+
+@1.4|S1|M
+Which is the best recommended action field in a handoff?
++ "Approve $212 refund for order 7781; damage photo verified, above agent's limit."
+- "Customer seems upset, and would probably appreciate some kind of goodwill gesture."
+- "See the conversation for full details about what has happened with this customer."
+- "The agent could not finish this one, so please take a look when you are able to."
+= Specific and actionable, with amount, order and reason. The others force the human to reinvestigate.
+
+@1.4|S1|H
+A workflow must run credit check, then approval, then disbursement. Occasionally, a model reorders the steps. What's the proportionate design?
++ Code enforces order, with each step's tool gated on the previous step's real result
+- A larger model, as more capable models will always follow the order correctly
+- A second agent that reads the logs each night and reverses wrong disbursements
+- A longer system prompt, with a numbered list and bold warnings on each of the steps
+= Ordering that must always hold belongs in code. Better models and longer prompts lower but don't remove risk, and a nightly reversal comes after the money has moved.
+
+@1.4|S1|M
+Your gate blocks `process_refund` because verification hasn't happened. What should the agent receive?
++ A clear error result stating that verification is required first
+- No response, so that the model will time out and then try again
+- A fake success, so that the customer isn't worried by the delay
+- A generic "Operation failed" with no other explanation at all
+= A clear message lets it take the right next step. Silence stalls, fake success misleads, and a generic error prevents recovery.
+
+@1.4|S4|M
+An SDK agent must run tests before it can commit. What's the most reliable way to enforce this?
++ A hook or gate that blocks the commit tool unless a passing test result exists
+- A CLAUDE.md instruction, saying that tests are always to be run before a commit
+- A tool description for commit that politely suggests that tests may be useful
+- A reminder message inserted into the conversation after every tenth model turn
+= Hard rules go in code. The others are guidance, with a non-zero failure rate.
+
+@1.4|S1|H
+A customer has a damaged-item claim and a billing question. Investigating them in parallel found the same order ID relevant to both. What does "shared context" add?
++ Each investigation can reuse known facts, and the final response stays consistent
+- It forces the two issues to be merged into one tool call for lower API costs
+- It lets the agent skip verifying the customer, as the order is already known
+- It means that only one of the two issues needs a resolution in the final reply
+= Shared facts prevent re-asking and contradictions. They don't merge tool calls, replace verification, or remove an issue.
+
+@1.4|S1|M
+Which is an anti-pattern in a handoff to a human?
++ Forcing the customer to repeat everything already established
+- Including the customer ID and the relevant order number
+- Stating the root cause of the problem that's been identified
+- Recommending an action for the human agent to consider
+= A proper summary prevents repetition. The other three are required parts of a good handoff.
+
+@1.4|S1|H
+Compliance asks whether "the agent's prompt requires verification" is an adequate control. What's the most accurate answer?
++ No: it's guidance with some failure rate, so a programmatic gate is required for a guarantee
+- Yes: Claude always follows system prompts, so a rule in the prompt is itself a guarantee
+- Yes, as long as the requirement is repeated in the user turn as well as the system prompt
+- No: the only adequate control is to remove all automated refunds, permanently, from the agent
+= That's the core distinction in TS 1.4. Prompts aren't a guarantee, and removing automation goes further than the requirement needs.
+
+@1.4|S1|M
+A refund step is gated on verification. Later, a new tool `issue_credit` is added, also moving money. What should an architect check?
++ That the same prerequisite applies to the new tool
+- That the new tool has a longer description than others
+- That customers are told about the new tool in advance
+- That `stop_reason` is changed for financial tool calls
+= Gates cover specific tools, so new money-moving tools need them too. The others don't enforce anything.
+
+@1.4|S1|H
+Select the two controls that provide deterministic enforcement.
++ A prerequisite gate that blocks a tool until an earlier step succeeds
++ A hook that intercepts tool calls and rejects policy violations
+- A system prompt rule, written in bold capital letters
+- A few-shot example showing the correct order of tool calls
+- A note in the tool's description about when it should be used
+= Those two run in code. The other three influence the model, which is probabilistic.
+
+@1.4|S1|M
+Select the two items that belong in a good escalation summary.
++ Root cause of the issue, as far as has been established
++ The recommended action, with the amount involved
+- The model's full internal reasoning from every turn
+- A count of how many tokens the conversation has used
+- The list of all the tools that were available to the agent
+= Those are actionable. Reasoning dumps, token counts and tool lists don't help a human resolve the case.
+
+@1.4|S4|H
+A pipeline step generates a migration script, and another applies it to production. How should "human approval before apply" be implemented?
++ The apply tool is blocked in code until a recorded approval exists
+- The generating agent is told to wait until a person has said yes
+- The apply tool's description says that human approval is expected
+- A line in CLAUDE.md asks all developers to review each migration
+= Only a code-level gate guarantees the sequence. The others depend on behavior.
+
+@1.4|S1|E
+"Prompt instructions alone have a non-zero failure rate." When does this matter most?
++ When compliance must be guaranteed
+- When choosing a friendly greeting
+- When formatting a closing message
+- When suggesting a helpful FAQ link
+= High-stakes requirements can't tolerate any failures. Tone and suggestions can.
+
+@1.4|S1|H
+An agent decomposed a three-part request, resolved two, and one needs a human. What's the best outcome for the customer?
++ Resolve two, and escalate the third with a structured summary
+- Escalate all three together, so that one human can handle the whole request at once
+- Keep trying the third autonomously, because partial resolution counts as a failure
+- Close the case after telling the customer that two issues out of three have been solved
+= Handle what's possible, and hand off the rest clearly. Escalating everything wastes capacity, pressing on risks harm, and closing abandons the third.
+
+@1.5|S1|E
+Which hook type intercepts tool results for transformation before the model processes them?
++ `PostToolUse`
+- `PreRequest`
+- `OnStopReason`
+- `ToolPrompt`
+= `PostToolUse` runs after a tool returns. The others aren't hook types named by the guide.
+
+@1.5|S1|M
+Three MCP tools return dates as Unix timestamps, ISO 8601 and "Jan 3." The agent misorders events. What's the best fix?
++ A `PostToolUse` hook that normalizes dates before the agent sees them
+- A longer system prompt, explaining how to convert each of the three formats
+- A separate subagent, whose only job is to convert dates when they appear
+- A change to the model's temperature, so that it reads dates more consistently
+= Normalization in code is deterministic and applies to every result. The model doing conversions is error-prone, and a subagent over-engineers it.
+
+@1.5|S1|M
+Policy: refunds above $500 must go to a human. What's the right mechanism?
++ A hook that intercepts large `process_refund` calls and escalates them
+- A few-shot example of a $600 refund being escalated, added to the system prompt
+- A daily audit that detects any refunds above $500 and sends an alert to managers
+- A tool description that says "please use only for amounts up to $500"
+= A guaranteed rule needs interception. Examples and descriptions are probabilistic, and an audit is after the fact.
+
+@1.5|S1|H
+A hook blocks a $700 refund. How should it best communicate this?
++ Return the reason, and direct the agent to the escalation path
+- Silently drop the call, and return a success message to the agent
+- Crash the session, so that a person can notice and investigate it
+- Reduce the refund to $500 automatically, and then process it anyway
+= Blocking with a clear redirection lets the agent continue properly. Fake success misleads, crashing loses the session, and changing amounts silently breaks policy.
+
+@1.5|S1|M
+Which is the key difference between hooks and prompt instructions?
++ Hooks give deterministic guarantees, while prompts give probabilistic compliance
+- Hooks are faster than prompts, while prompts are more reliable than hooks
+- Hooks only apply to built-in tools, while prompts only apply to MCP tools
+- Hooks replace the system prompt entirely once at least one has been registered
+= This is the central distinction. The others are false.
+
+@1.5|S1|M
+A tool returns status codes such as 3 and 7, and the agent misinterprets them. What should you do?
++ Translate the codes into meaningful values with a `PostToolUse` hook
+- Ask the model to guess the meaning of the codes from nearby context
+- Add every code to a long table in the system prompt, and hope it's used
+- Escalate every case to a human when a numeric code has appeared
+= Normalizing in code removes ambiguity before reasoning begins. A prompt table is less reliable, and escalation is disproportionate.
+
+@1.5|S4|M
+A developer's agent must never run `rm -rf` through Bash. What's the strongest option listed?
++ A pre-execution hook that inspects and rejects those commands
+- A line in CLAUDE.md asking it not to run destructive commands
+- A friendlier, more detailed description for the Bash tool
+- A few-shot example of the agent choosing a safer command
+= Interception is enforcement. The others are guidance. *Build today: Claude Code's docs also advise OS-level sandboxing, since text matching can be bypassed by other forms of a command.*
+
+@1.5|S1|H
+You've normalized dates with a hook. A new tool is added that returns a different date format. What's a good design consideration?
++ Keep normalization rules central, so a new format is added in one place and tested
+- Move the normalization into the prompt, since prompts adapt to new formats by themselves
+- Require the new tool's team to stop returning dates in any of their responses at all
+- Add a subagent for each new tool, with a prompt that explains how it formats dates
+= Central, deterministic normalization scales with tools. The others are unreliable or disproportionate.
+
+@1.5|S1|M
+Which task is a poor fit for a hook?
++ Judging whether a customer's explanation sounds reasonable
+- Blocking any refund above a set limit in dollars
+- Converting all timestamps into a single standard format
+- Removing unused fields from a large order record
+= Judgment on free text suits the model. The other three are clear rules in code.
+
+@1.5|S1|H
+A `PostToolUse` hook trims order records from 40 fields to 5. What does this help with?
++ Context use: irrelevant fields no longer accumulate across turns
+- Rate limiting: fewer fields mean that each tool can be called less often
+- Security alone: fields are hidden from logs, but the model still sees them
+- Schema validity: tool inputs now pass strict validation on every call
+= It reduces accumulated tokens from verbose results (TS 5.1). It doesn't change call rates, it does change what the model sees, and it acts on outputs rather than inputs.
+
+@1.5|S1|E
+Why would you choose a hook over a prompt for a refund limit?
++ The rule requires guaranteed compliance
+- Hooks use more tokens than prompts do
+- Prompts can't mention amounts of money
+- The API forbids limits in system prompts
+= That's the deciding criterion. The others are false.
+
+@1.5|S1|H
+A hook redirects over-limit refunds to `escalate_to_human`. What should the agent's escalation include?
++ The customer's details, the amount, and the reason for the block, in a structured summary
+- Only the amount, as the human can find the rest in the hook's own server logs
+- Nothing further, as the hook has handled the entire case on behalf of the agent
+- An apology to the customer and no further details, in order to protect their privacy
+= The redirection still needs a useful handoff (TS 1.4). The others leave the human without enough to act on.
+
+@1.5|S4|M
+An MCP tool returns paths relative to various roots, confusing the agent. What's the most reliable fix?
++ Convert paths to a common form with a `PostToolUse` hook
+- Ask the agent in the prompt to figure out each tool's root
+- Add more tools, with one tool for each root directory
+- Restart the agent whenever a relative path gets returned
+= Deterministic normalization before reasoning is the pattern. The others are unreliable or wasteful.
+
+@1.5|S1|M
+Which statement about hooks and the model is correct?
++ The model can't talk its way past a blocking hook, as it runs outside the model
+- The model can disable hooks when it explains why a particular case is an exception
+- Hooks run inside the model, so their effect depends upon the wording of the prompt
+- Hooks are only suggestions, which the model is free to weigh against its instructions
+= Hooks run in your application, outside the model, which is what makes them deterministic.
+
+@1.5|S1|H
+Select the two appropriate uses for tool-call interception hooks.
++ Blocking refunds beyond a policy limit
++ Redirecting prohibited actions to a human workflow
+- Choosing a warmer tone for customer messages
+- Normalizing tool results after they have returned
+- Deciding which questions are ambiguous to the customer
+= Interception acts on outgoing calls to enforce rules. Tone and ambiguity are judgment, and normalizing results is `PostToolUse`.
+
+@1.5|S1|H
+Select the two appropriate uses for `PostToolUse` hooks.
++ Converting heterogeneous timestamps to one format
++ Removing irrelevant fields from verbose tool results
+- Blocking a refund before it can be executed
+- Rewriting the system prompt for each new turn
+- Choosing which tool the model will call next
+= `PostToolUse` transforms results after execution. Blocking before execution is interception, and the others aren't its role.
+
+@1.5|S1|M
+A refund limit is enforced in a hook, and also stated in the system prompt. Is this redundant?
++ No: the prompt helps the agent plan and explain, while the hook guarantees the limit
+- Yes: having both causes the model to fail, so the prompt line must be removed
+- Yes: if there's a hook, the model will be told automatically by the API
+- No: both give guarantees, so one acts as a backup if the other fails
+= The prompt reduces wasted attempts and helps communication. Only the hook is a guarantee. Nothing automatically informs the model, and both together cause no failure.
+
+@1.5|S4|H
+Your hook normalizes results, and now an upstream tool changes its format. Results pass through un-normalized, and the agent is confused. What practice would catch this soonest?
++ Tests on the hook, plus flagging of unknown formats
+- Asking the model to report any time that it feels confused by the data it's reading
+- A monthly review of the agent's reasoning, sampled from a few of its conversations
+- Removing the hook, because the model is able to handle most formats reasonably well
+= A hook is code, so test it, and make unexpected input visible. The others are slow, or remove the safeguard.
+
+@1.6|S5|E
+When is prompt chaining the better decomposition pattern?
++ For predictable, multi-aspect work, such as a fixed review checklist
+- For open-ended investigation, where the steps can't be known in advance
+- Whenever a task is expected to need more than one tool during its run
+- Only for tasks that can be completed in a single short model response
+= Fixed sequences suit predictable work. Open-ended work suits dynamic decomposition, and the other options aren't the criterion.
+
+@1.6|S4|E
+When is dynamic adaptive decomposition the better pattern?
++ When subtasks depend upon what's discovered along the way
+- When the same four steps are always performed in order
+- When latency needs to be strictly bounded for each request
+- When each subtask can be fully specified ahead of time
+= Adaptive plans generate subtasks from findings. Fixed, fully specified steps fit chaining.
+
+@1.6|S4|M
+"Add comprehensive tests to this legacy codebase." What's the best way to begin?
++ Map the structure, find high-impact areas, then build a prioritized plan that adapts
+- Write tests for each file in alphabetical order until the budget has been spent
+- Ask for a single prompt to generate all of the tests in one very large response
+- Start with the smallest files, because small files will be the easiest to cover
+= It's an open-ended task, so map first, prioritize by impact, and adapt as dependencies appear. The others ignore importance.
+
+@1.6|S5|M
+A 20-file review is done in a single pass, with uneven depth. What's the best restructuring?
++ Per-file local passes, followed by a separate cross-file integration pass
+- One pass using a larger model, with a higher limit on output tokens
+- One pass, asking the model to spend equal attention on each file
+- Reviewing only the five largest files, as they have the most code
+= Separate passes avoid attention dilution while still catching integration issues. A bigger model doesn't fix attention, and sampling files misses bugs.
+
+@1.6|S5|M
+Why add a cross-file pass after per-file analysis?
++ Per-file passes can't see data flow or contracts spanning several files
+- Per-file passes only ever detect style issues and never any real bugs
+- The API requires a final pass that references every previous tool result
+- It gives a second chance to repeat each of the per-file findings word for word
+= Integration issues appear only across files. The others are false or wasteful.
+
+@1.6|S6|M
+A pipeline classifies documents, extracts fields and then validates them, always in that order. What pattern fits?
++ Prompt chaining
+- Dynamic decomposition
+- Coordinator re-planning at every step
+- An open-ended investigation agent
+= The steps are predictable and fixed, so a chain is simple and appropriate.
+
+@1.6|S3|M
+A bug investigation changes direction after each log file is read. A fixed pipeline keeps doing irrelevant steps. Why?
++ The work is exploratory, so plans need to adapt as findings emerge
+- Fixed pipelines can't read logs, so the tool must be changed
+- Investigation tasks must always use a batch API, which adapts
+- The model needs a bigger context window for its plan to work
+= Open-ended tasks need adaptive plans. The other options don't address that.
+
+@1.6|S5|H
+A team proposes dynamic decomposition for its standard, unchanging PR checklist. What's the best response?
++ A prompt chain is simpler and more predictable here, as the steps don't depend on findings
+- Dynamic decomposition is always better, as adaptivity improves every workflow it's used on
+- Neither pattern can apply to a checklist, which should only be handled by one long prompt
+- Dynamic decomposition is required whenever a workflow has at least three separate steps
+= Choose the simplest pattern that fits. Adaptivity adds cost and variance with no benefit for fixed steps.
+
+@1.6|S4|H
+An agent is mapping a legacy system, and discovers that a "minor" module is used everywhere. What should a good plan do?
++ Re-prioritize, given the newly discovered dependency
+- Stick to the original plan to stay deterministic
+- Restart the entire exploration from the beginning
+- Ask the user to rewrite the module before going on
+= Adaptive plans incorporate discoveries. Sticking blindly or restarting wastes the finding.
+
+@1.6|S5|H
+Per-file reviews flag a pattern as bad in one file and accept it in another. What helps most?
++ Shared explicit criteria per file, plus an integration pass to reconcile findings
+- Merging all the files back into a single pass, so that the model can see them together
+- Removing the integration pass, because that pass is likely causing the contradictions
+- Asking the model to be more consistent, with a line at the top of the prompt
+= Consistency comes from explicit criteria, and reconciliation from an integration pass. Merging back reintroduces dilution, and a vague request doesn't help.
+
+@1.6|S3|M
+A research agent always performs five steps, even if step 2 shows the question's already answered. What's the issue?
++ Fixed steps ignore intermediate findings
+- It's missing a forced tool on step 5
+- Its iteration cap has been set too low
+- Five steps exceed the context window
+= The plan doesn't adapt to findings. The others aren't causes.
+
+@1.6|S6|H
+Most invoices follow one flow, yet some have attachments needing extra investigation. What's a good design?
++ A chain for the common path, with an adaptive step or agent only for the exceptions
+- A fully dynamic agent for every invoice, so that any exception is automatically handled
+- A longer chain, with attachment handling for all invoices whether they need it or not
+- Rejecting all invoices that have attachments, sending them to a separate manual queue
+= Use each pattern where it fits. Full dynamism adds cost for common cases, and the extremes either waste steps or lose automation.
+
+@1.6|S5|M
+What's "attention dilution" in the context of large reviews?
++ Too many files in one pass gives shallow or uneven analysis
+- The model's temperature rises as more files are added to it
+- Reviewers stop reading comments after a long CI run
+- Tool descriptions lose effect as more tools get added
+= It describes one pass spreading itself too thin. The rest are different issues.
+
+@1.6|S4|M
+Which is the best first step for "understand how payments work in this monolith"?
++ Search for entry points, then trace the flows outward, adjusting as you learn
+- Read every file in the repository from top to bottom, before forming a view
+- Ask the model to describe how payment systems typically work in monoliths
+- Write a fixed list of ten files to read, based upon their names alone
+= Incremental exploration builds understanding. Reading everything exhausts context, general knowledge isn't this code, and a fixed list can't adapt.
+
+@1.6|S5|H
+Select the two tasks best suited to prompt chaining.
++ A review that always checks security, then performance, then style
++ Extract fields, validate, then format for a downstream system
+- Finding the root cause of an intermittent production outage
+- Researching an unfamiliar market with no fixed line of inquiry
+- Exploring a legacy system whose structure nobody understands
+= Fixed, predictable sequences fit chaining. The other three are open-ended.
+
+@1.6|S4|H
+Select the two signals that a task needs dynamic decomposition.
++ The next step depends upon what the current step reveals
++ The scope isn't known until some exploration has been done
+- The output must follow a fixed JSON schema in all cases
+- The same steps have run unchanged for many past examples
+- The task has a strict deadline measured in milliseconds
+= Dependence on findings and unknown scope call for adaptivity. Schemas and repeated steps don't, and tight latency argues against it.
+
+@1.7|S4|E
+Which command continues a named prior Claude Code conversation?
++ `--resume <session-name>`
+- `--restore <session-name>`
+- `--session load <name>`
+- `--history <session-name>`
+= The guide names `--resume <session-name>`. The others aren't its options.
+
+@1.7|S4|E
+What's `fork_session` for?
++ Independent branches from a shared analysis baseline
+- Merging two old sessions into a single new session
+- Copying a session onto another developer's machine
+- Reducing the context size of a long-running session
+= Forking creates divergent branches for exploration. It isn't merging, sharing or compaction.
+
+@1.7|S2|M
+You resume yesterday's refactoring session, and you've since changed three files. What should you do?
++ Tell the session which files changed, so it can re-analyze them
+- Say nothing, as Claude automatically detects all changes on resume
+- Ask it to re-read the entire repository before doing anything else
+- Delete the session, since any change makes prior context unusable
+= Informing it of specific changes allows targeted re-analysis. Don't assume detection, full re-exploration wastes context, and deletion loses valid work.
+
+@1.7|S2|M
+Most tool results in a saved session are stale after a large rebase. What's the most reliable way to continue?
++ Start a new session with a structured summary of what's still valid
+- Resume it as it is, and rely on the model to notice the stale results
+- Resume it and run `/compact`, as that will refresh all of the tool results
+- Fork the session, since forks automatically re-read files that have changed
+= With mostly stale results, a fresh session with injected facts is more reliable. Compaction doesn't refresh data, and forks inherit the same stale results.
+
+@1.7|S2|M
+Your session has a valid analysis, and just one changed file. Which approach fits?
++ Resume, and point it at the one file that changed
+- Start fresh, as resuming is always less reliable
+- Fork twice, and compare the two forks' answers
+- Export the transcript into a new system prompt
+= When prior context is mostly valid, resume and inform. Fresh starts discard useful work here.
+
+@1.7|S4|M
+You want to compare a mock-based testing strategy with an integration-based one, from one codebase analysis. What's the best method?
++ Finish the analysis, then fork a branch for each strategy
+- Try both strategies in one session, alternating between them
+- Run the analysis twice, in two separate new sessions
+- Ask a subagent to write both of them into one shared file
+= Forking reuses the baseline and keeps branches independent. Alternating mixes them, and repeating analysis wastes work and may diverge.
+
+@1.7|S2|H
+A resumed session references a function that was renamed last night, and proposes edits based on the old code. What's happening?
++ It's reasoning from stale tool results held in its history
+- Its model has been downgraded since the last session ran
+- `--resume` loads the wrong session whenever a file has changed
+- Function renames always invalidate a session's stored memory
+= Old reads remain in history unless they're refreshed. Tell it what changed, or start fresh with a summary.
+
+@1.7|S2|E
+Why use named sessions?
++ To return to a specific investigation later
+- To share CLAUDE.md files across team repositories
+- To speed up model inference for that conversation
+- To turn off context limits for that conversation
+= Names let you continue a particular conversation. They don't do the others.
+
+@1.7|S4|H
+After a crash, you could resume or start fresh. Half of the earlier results concern files that have since changed. Which factor should decide?
++ How much of the prior context is still valid
+- How many tokens the earlier session has used
+- Whether the session has a memorable name
+- Whether the model has changed its version
+= Validity of context drives the choice between resuming and starting fresh with a summary.
+
+@1.7|S2|M
+What's a good structured summary for starting a fresh session?
++ Key decisions, current state, file locations, and what remains to be done
+- A raw paste of all the earlier tool results from the previous session
+- A single sentence which says to continue where we had left off
+- The previous session's name, so that it can load the context itself
+= A summary carries the conclusions without stale data. A raw paste brings stale data back, one sentence carries nothing, and a name doesn't transfer context to a fresh session.
+
+@1.7|S4|M
+What happens to one fork when you make changes in the other?
++ Nothing: their conversations are independent
+- Both forks receive the changes on their next model turn
+- The older fork is closed and can no longer be resumed
+- The two forks are merged automatically once both finish
+= Forks are independent conversation branches. *Note: their conversations are independent, but a shared working directory's files are not, so isolate files too if needed.*
+
+@1.7|S2|H
+Two developers use a named session. Which limitation is most relevant when one of them refactors code?
++ The session's memory of files can diverge from the repo unless it's told what changed
+- The session is locked, so the second developer can't commit to the repository
+- Session names are global, so renames will propagate to all of the team's repos
+- The refactor is automatically reverted when the session is next resumed
+= Session context doesn't track the repo by itself. The others aren't behaviors.
+
+@1.7|S4|H
+An agent's investigation spans several days. What approach best keeps reliability high?
++ Named sessions, change notes, and a fresh summary if much goes stale
+- One session kept open permanently, which never needs anything else at all
+- A new blank session every morning, with nothing carried over from the last
+- Forking at each message, in order to keep every possible branch available
+= This combines the guide's tools according to how valid the context is. The extremes lose reliability or continuity.
+
+@1.7|S2|M
+After resuming, the agent re-reads your entire repo to catch up, using most of its context. What would've been better?
++ Naming the specific changed files for targeted re-analysis
+- Forking first, so that the re-read can be done twice
+- Raising `max_tokens`, so that the re-read completes faster
+- Skipping any mention of changes, to save a few tokens
+= Targeted re-analysis avoids exhausting context. The others don't address it.
+
+@1.7|S4|E
+Which is the best fit for `fork_session`?
++ Comparing two refactoring approaches
+- Running one task in a CI pipeline
+- Reading one small configuration file
+- Fixing a single-line typo in a README
+= Forking serves divergent exploration. The others are single-path tasks.
+
+@1.7|S2|H
+Select the two conditions that favor starting a new session with a summary over resuming.
++ Many earlier tool results now describe outdated code
++ The prior analysis was based on a different branch
+- The session's analysis is valid, with one small change
+- You want to keep all of the session's detailed history
+- The session has an easily remembered name
+= Staleness favors a fresh start. Mostly valid context favors resuming.
+
+@1.7|S4|H
+Select the two practices for a resumed session after code changes.
++ List the files that changed since it last ran
++ Ask for re-analysis of those specific areas
+- Assume that it has noticed the changes itself
+- Re-explore the entire codebase from the beginning
+- Fork the session and delete the original branch
+= Inform and target. Don't assume detection or re-explore everything.
+
+@1.7|S2|M
+What's the main risk of resuming without saying that files have changed?
++ Confident recommendations based on code that no longer exists
+- A failed resume, with an error about the changed files
+- Immediate loss of the session's whole conversation history
+- Automatic rollback of any changes that you've made
+= Stale results lead to wrong reasoning, without any error. The others don't occur.

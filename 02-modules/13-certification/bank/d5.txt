@@ -1,0 +1,610 @@
+@5.1|S1|M
+After summarizing a long chat, the agent says "a partial refund was discussed," having lost "$47.50 on order 7781 by Friday." What's the best fix?
++ Keep transactional facts in a persistent "case facts" block, outside summarized history
+- Ask the summarizer to be more careful about preserving numbers in its summaries
+- Stop summarizing, and keep sending the whole transcript until the limit is reached
+- Have the customer repeat the key details once more every time they're needed
+= A case facts block keeps amounts, dates and IDs exact. Summaries compress them, and the others waste context or annoy the customer.
+
+@5.1|S1|E
+What does progressive summarization risk losing?
++ Amounts, dates, and customer-stated expectations
+- The system prompt and the list of available tools
+- Prior tool definitions and their input schemas
+- The API version and the model's identifier
+= Specifics such as amounts, dates and stated expectations get condensed into vague language. System prompts, tool definitions and API settings aren't part of what's summarized.
+
+@5.1|S3|M
+A long aggregated input has findings at its start, middle and end. The output omits those in the middle. What's this called?
++ The "lost in the middle" effect
+- Attention dilution across agents
+- Progressive schema degradation
+- The stale tool result problem
+= Models process the start and end reliably, and may omit the middle.
+
+@5.1|S3|M
+How do you mitigate position effects in a long aggregated input?
++ Put a key findings summary first, and organize details with explicit section headers
+- Remove the headers, so that the model reads all the text with equal attention
+- Put the most important material in the very middle of the input, where it's safest
+- Reverse the order of the sections on every other run, to average the effect
+= Leading with key findings and using explicit headers counter the tendency to miss the middle. Removing headers or placing key items mid-input makes it worse, and reversing order doesn't solve it.
+
+@5.1|S1|M
+Each `lookup_order` returns 40 fields, and only 5 are relevant. What should you do?
++ Trim the results to the relevant fields before they accumulate in context
+- Keep them all, since a longer context always leads to better decisions
+- Ask the model to ignore the fields that aren't relevant to the current task
+- Call the tool less often, even though the agent needs more order information
+= Tool results accumulate disproportionately, so trim in code (for example, with a `PostToolUse` hook).
+
+@5.1|S1|M
+A multi-issue session mixes up two orders' details. What's the best structure?
++ A separate context layer with structured data per issue: order ID, amount, status
+- One combined summary paragraph, updated after every turn with what was discussed
+- A rule telling the agent to be careful not to mix the two orders' details up
+- A fresh session per message, so that one order's details can't touch another's
+= Structured per-issue data keeps each order's facts separate. A combined paragraph blurs them, a reminder is only guidance, and a session per message loses continuity.
+
+@5.1|S3|M
+A synthesis agent has a small context budget, and search agents return long reasoning. What's the best change?
++ Have upstream agents return structured facts, citations and relevance scores
+- Give the synthesis agent a larger context by way of a longer system prompt
+- Ask synthesis to skim through long inputs and skip what looks unimportant
+- Pass only the final sentence of each search agent's reasoning to the synthesis
+= Modify upstream output for limited downstream budgets.
+
+@5.1|S3|H
+Why require subagents to include dates and source locations in structured output?
++ It supports accurate synthesis, including temporal interpretation and attribution
+- It makes JSON parsing faster, as dates are easier to validate in schemas
+- It lets the coordinator skip any evaluation of the subagent's reported findings
+- It's required by the API whenever a request contains a citation of any type
+= Metadata lets synthesis attribute claims and interpret them in time (TS 5.6). It's not about parsing speed or an API rule, and the coordinator still has to evaluate findings.
+
+@5.1|S1|E
+Why send the complete conversation history in each API request?
++ To maintain coherence, as the model has only what's sent
+- To reset the rate limit counter that applies to the account
+- To enable automatic prompt caching on all of the old messages
+- To let the API remove the older messages on your behalf
+= Requests are stateless, so continuity requires the history.
+
+@5.1|S1|H
+A customer said "I need this by Friday" on turn 2, and by turn 30, the agent has forgotten it. Which design best prevents this?
++ Capture customer-stated expectations in the persistent facts block, as they're stated
+- Increase the summary's length until it's as long as the conversation has become
+- Ask the customer at the end of each turn whether anything has changed for them
+- Restart the conversation at turn 20, carrying over only the customer's name
+= Stated expectations are a named casualty of summarization.
+
+@5.1|S4|M
+Over a long run, tool results dominate context. Which is the best first step?
++ Trim verbose results, keeping only the relevant fields
+- Move to a bigger model with a larger context window
+- Ask the model to write shorter responses at each turn
+- Reduce the number of tools that are defined overall
+= Fix what's consuming it. Bigger capacity doesn't fix attention.
+
+@5.1|S1|H
+Where should the case facts block go in each request?
++ In each prompt, outside the summarized history, so that it's always present and exact
+- Only in the first message, as the model will remember it for the whole conversation
+- Inside the rolling summary, where it can be condensed along with everything else
+- In a tool's description, so that it's only loaded whenever that tool gets called
+= Include it in each prompt, outside the summarized history, so it stays exact and present. The model has no memory beyond each request, summaries condense it, and tool descriptions are the wrong place.
+
+@5.1|S3|H
+Select the two mitigations for losing findings in a long aggregated input.
++ A key findings summary placed at the start
++ Explicit section headers organizing the details
+- Removing all headings and structure from the input
+- Placing the most critical findings near the middle
+- Lengthening each section's supporting reasoning
+= Models handle the start and end of long inputs best, so lead with key findings and use headers to organize details. Removing structure or burying key items in the middle makes it worse.
+
+@5.1|S1|H
+Select the two things that belong in a persistent facts block.
++ The refund amount and the order number
++ The customer's stated deadline
+- The model's full reasoning from each turn
+- All 40 fields of each order record
+- Every greeting from the customer
+= Transactional facts and expectations go in. The others bloat it.
+
+@5.2|S1|E
+A customer writes, "Get me a human." What should the agent do?
++ Escalate immediately, without first investigating
+- Investigate first, as the issue may be easy
+- Ask them to explain why they want a human
+- Offer a discount, in order to retain them
+= An explicit request is honored at once. Investigating first, asking why, or offering a discount all resist what the customer asked for.
+
+@5.2|S1|M
+A customer is frustrated about a late delivery, a case the agent can handle, and hasn't asked for a human. What's the best response?
++ Acknowledge it and offer to resolve, escalating only if they repeat the request
+- Escalate immediately, because frustration is one of the reliable signs of a complex case
+- Ignore their frustration, and proceed straight on to calling the appropriate order tools
+- Ask them to rate how frustrated they are, and then escalate above a certain threshold
+= Frustration alone isn't a trigger, unless they ask.
+
+@5.2|S1|M
+Which is an appropriate escalation trigger?
++ Policy is silent on the customer's specific request
+- The customer's message uses negative sentiment
+- The model reports a confidence below 70%
+- The conversation has reached a tenth message
+= Policy gaps are named triggers. Sentiment and self-reported confidence are unreliable.
+
+@5.2|S1|M
+Policy covers own-site price adjustments, and the customer asks for a competitor price match. What should the agent do?
++ Escalate, as policy doesn't cover it
+- Apply the own-site policy by analogy
+- Refuse, as it isn't listed in the policy
+- Offer half of the requested adjustment
+= Policy gaps warrant escalation, and the agent shouldn't invent policy.
+
+@5.2|S1|M
+`get_customer` returns three "J. Smith" matches. What should the agent do?
++ Ask for additional identifiers
+- Pick the most recently active
+- Pick the one with the most orders
+- Use all three, and merge the results
+= Multiple matches require clarification, and not heuristics.
+
+@5.2|S1|H
+Why is sentiment-based escalation a poor proxy?
++ Sentiment doesn't measure complexity: angry customers may have simple issues, and calm ones complex ones
+- Sentiment analysis models are unavailable for use with most kinds of customer support conversations
+- Sentiment-based routing increases costs, and that's the sole reason it isn't recommended here
+- It's only a poor proxy for written messages, though it's reliable with any voice transcripts
+= Sentiment measures mood, and not complexity: an angry customer can have an easy problem, and a calm one a policy exception. Neither availability nor cost is the main objection.
+
+@5.2|S1|H
+An agent hands off routine warranty swaps, yet it attempts policy exceptions by itself. What's the best way to correct this?
++ Add explicit escalation criteria with few-shot examples of when to escalate or resolve
+- Add sentiment analysis, and have it send all the unhappy customers to a human agent
+- Ask the model for a confidence score, and escalate anything that scores below 80
+- Remove the escalation tool, so that the agent is forced to resolve all of its cases
+= Explicit criteria with examples calibrate judgment. *Work guide sample 3 as well.*
+
+@5.2|S1|M
+Which escalation trigger shows "inability to make meaningful progress"?
++ Two approaches have failed, and no other tool applies
+- The customer used a long sentence to explain the issue
+- The conversation took more than three minutes overall
+- The agent used a tool that it hadn't used earlier
+= It's a real lack of progress. The others are unrelated.
+
+@5.2|S1|H
+A customer asks for a human, then adds, "but first, what's my order status?" What's the best behavior?
++ Honor the human request promptly, and answer the quick factual question if it doesn't delay that
+- Refuse to answer anything, because the customer has already asked to speak to a person
+- Treat the question as cancelling the request, and continue handling the case autonomously
+- Ask the customer to choose between the status answer and speaking with a human agent
+= Honor the explicit request. A quick answer is acceptable, but don't make it a condition.
+
+@5.2|S1|M
+What's wrong with escalating whenever the agent "feels unsure"?
++ Self-reported confidence is an unreliable proxy for actual case complexity
+- The model can't express uncertainty in any of its text responses at all
+- Escalations cost more than resolved cases, and that alone is the sole issue
+- The API doesn't allow the escalation tool to be called with an unsure model
+= Self-reported confidence doesn't track real complexity, so it escalates the wrong cases. Models can express uncertainty and the API allows the tool, so the other reasons are false.
+
+@5.2|S1|E
+What's the best tool for improving when-to-escalate judgment?
++ Few-shot examples with explicit criteria
+- A higher iteration limit for each case
+- A sentiment score on each new message
+- A shorter system prompt for the agent
+= Explicit criteria with few-shot examples teach the judgment. Iteration limits don't, sentiment is an unreliable signal, and a shorter prompt removes guidance.
+
+@5.2|S1|H
+The refund's within policy, the tool's available, and the customer is polite but says, "This seems complicated." What's the best action?
++ Resolve it autonomously, as nothing triggers escalation
+- Escalate, as the customer described the case as complicated
+- Ask a human to check the refund before responding
+- Offer to escalate, and wait for their reply first
+= The customer didn't ask for a human, and it's within capability.
+
+@5.2|S1|H
+Two accounts match, and the customer gives a ZIP code that matches both. What's next?
++ Ask for another identifier, such as an order number or email
+- Pick the account with the most recent activity on it
+- Apologize, and tell them that nothing can be done
+- Proceed on both accounts, then let the customer sort it out
+= It's still ambiguous, so ask for another identifier. Recent activity is a guess, giving up isn't necessary, and acting on both risks touching the wrong account.
+
+@5.2|S1|M
+Which is best in a system prompt for escalation?
++ "Escalate if the customer asks for a human, policy doesn't cover the request, or you can't progress. Examples: …"
+- "Use your best judgment about when an escalation might be appropriate for the customer and the business."
+- "Escalate whenever the customer seems unhappy, and try to avoid it whenever the customer seems content."
+- "Escalate only if your confidence falls below 70 out of 100 on the current customer's request."
+= Explicit triggers with examples give consistent judgment. "Best judgment" gives no criteria, and sentiment and self-reported confidence are unreliable proxies.
+
+@5.2|S1|H
+Select the two appropriate triggers.
++ The customer explicitly asks for a human
++ Policy is ambiguous or silent on the request
+- Negative sentiment detected in a message
+- Self-reported confidence below a threshold
+- The conversation has passed five messages
+= Those are named. The others are unreliable proxies, or unrelated.
+
+@5.2|S1|H
+Select the two correct behaviors when tool results give multiple matching customers.
++ Ask for additional identifiers
++ Hold any account action until it's resolved
+- Choose the most plausible by heuristic
+- Choose the account with the highest value
+- Proceed using the first result returned
+= Ask for more identifiers, and take no account action until it's clear. Heuristics such as value, plausibility or result order can act on the wrong customer.
+
+@5.3|S3|E
+What's the best error report from a search subagent to its coordinator?
++ Failure type, attempted query, partial results and alternatives
+- "Search unavailable", to keep messages small and simple
+- An empty list marked as success, for workflow continuity
+- A fatal error which stops the entire research workflow
+= Failure type, query, partial results and alternatives let the coordinator choose a recovery. A generic status hides details, an empty success misleads, and a fatal stop wastes other work.
+
+@5.3|S3|M
+Why is returning "search unavailable" a problem?
++ It hides what failed and what was tried, so the coordinator can't choose a recovery
+- It's too long for a coordinator that has only a small context budget available
+- It reveals sensitive internal information about the search provider being used
+- It causes the coordinator to treat the search as having completed successfully
+= A generic status hides what failed and what was tried, so the coordinator can't choose well. It isn't too long, it doesn't reveal secrets, and it isn't read as success.
+
+@5.3|S3|M
+Which pair are both named as anti-patterns?
++ Silently returning empty results, and terminating the whole workflow on one failure
+- Returning partial results, and including the query that was attempted in the error
+- Retrying a transient failure locally, and reporting unrecoverable errors upward
+- Reporting failure types, and suggesting some alternative approaches to the coordinator
+= Hiding failures and terminating on one failure are both named. The other pairs describe recommended practices such as partial results and local retries.
+
+@5.3|S3|M
+A query returned zero matches, with no failure. How should it be reported?
++ As a valid empty result
+- As a transient error
+- As a permission error
+- As a workflow failure
+= Valid empties are successes. Mislabeling triggers needless recovery.
+
+@5.3|S3|M
+A search subagent's backend times out once. What should it do first?
++ Retry locally, propagating only if it can't resolve the failure
+- Tell the coordinator at once, so that it can decide about a retry
+- Return an empty success, and let the synthesis agent proceed with it
+- Stop the whole workflow, so that the report isn't left incomplete
+= Transient failures can often be resolved locally, so retry first, and report only what can't be fixed. Immediate escalation adds noise, an empty success hides it, and stopping over-reacts.
+
+@5.3|S3|H
+One of four subagents fails, with partial results. How should the final report handle it?
++ Annotate coverage: what's well-supported, and where gaps exist
+- Leave out the failed area without mention, so that the report still reads completely
+- Fill the gap from the model's general knowledge, and present it the same way as the rest
+- Refuse to produce any report at all, until all four subagents have succeeded
+= Coverage annotations keep the report useful and honest. Leaving out the gap misleads, general knowledge has no sources, and refusing throws away three good results.
+
+@5.3|S3|H
+A coordinator receives "timeout on source A after 2 retries; 40% of results collected; source B may cover this." What can it now do?
++ Decide whether to try source B, accept the partial results, or adjust the scope
+- Nothing different from what it would do with a generic failure message
+- Only retry source A, as coordinators can only retry failed operations
+- Only terminate the run, since a failure message always ends the workflow
+= Knowing the failure, what's collected, and an alternative lets it choose among options. A generic message wouldn't allow that, and coordinators aren't limited to retrying or terminating.
+
+@5.3|S3|M
+An access failure and a valid empty result look the same to the coordinator. What's the consequence?
++ It may report "nothing exists" when the search never ran, or retry pointlessly
+- It will always make the right decision, as both of them contain no results
+- The API detects the difference, and it raises an exception to the coordinator
+- Its synthesis will be faster, as it no longer has to process any results
+= The difference drives the decision: retry or find alternatives, or accept that nothing exists. Treating them alike leads to false conclusions or pointless retries, and the API doesn't detect it.
+
+@5.3|S1|M
+A billing subagent can't reach a payments service after retries. What should it return?
++ The failure, what it tried, any partial data, and what could be done instead
+- A success with an amount of zero, so that the conversation keeps moving
+- A note saying that everything's fine, along with a recommendation to wait
+- The full exception stack and connection string, so nothing has been hidden
+= The structured context is useful, and a raw dump risks leaking secrets.
+
+@5.3|S3|H
+A team terminates the whole research run whenever any subagent fails, "to protect quality." What's a better approach?
++ Continue with what's available, annotate gaps, and let the coordinator decide on recovery
+- Keep terminating, because a partial report has less value than having no report at all
+- Hide failures from the coordinator, so that the run is never interrupted by one
+- Retry the entire run from scratch until all subagents have succeeded at the same time
+= Continue with what's available, and annotate gaps. Terminating discards good work, hiding failures misleads, and rerunning everything until all succeed is wasteful.
+
+@5.3|S3|E
+What does a coverage annotation tell the reader?
++ Which findings are well-supported, and where gaps exist
+- Which model version was used for each of the findings
+- How many tokens each of the sections of the report took
+- Which developer has last modified the coordinator's prompt
+= It shows which findings are well-supported and where sources were unavailable, so readers don't mistake gaps for absence. Model versions, tokens and authorship don't address that.
+
+@5.3|S3|H
+Select the two fields that help a coordinator recover from a subagent failure.
++ The attempted query
++ Partial results gathered before the failure
+- The subagent's total token usage
+- The current date on the server
+- The subagent's prompt word count
+= The attempted query and partial results show what was done and what exists. Token usage, the date and prompt length don't inform recovery.
+
+@5.3|S3|H
+Select the two anti-patterns.
++ Returning empty results as success after a failure
++ Terminating the workflow on a single subagent failure
+- Local retries of transient failures
+- Annotating gaps in the final report
+- Separating access failures from valid empties
+= Hiding a failure as an empty success misleads, and stopping everything for one failure discards good work. The other three are the recommended behaviors.
+
+@5.4|S2|E
+What's a sign of context degradation in a long session?
++ Answers cite "typical patterns", not specific classes
+- The session's responses are always formatted in valid JSON
+- A new tool gets discovered automatically at the next turn
+- The model starts to ask more questions about the requirements
+= Vague references to "typical patterns", in place of specifics found earlier, suggest that details have faded. Valid JSON, new tools and more questions don't indicate it.
+
+@5.4|S2|M
+What's the role of a scratchpad file in long exploration?
++ It persists key findings across context boundaries, for later reference
+- It increases the size of the context window for that specific session
+- It stores API credentials safely between the exploration's different phases
+- It replaces the need for reading any source files during that exploration
+= Findings written to a file survive context limits and can be re-read. It doesn't grow the context window, it isn't for credentials, and it doesn't replace reading source files.
+
+@5.4|S4|M
+You need "all test files" and "the refund flow's dependencies" while keeping the main session focused. What's best?
++ Spawn subagents for those, and keep coordination in the main agent
+- Run them both in the main session, as subagents can't read the repository
+- Copy all the repository's files into the main agent's prompt, before starting
+- Ask each question in a new unrelated session, and don't record the results
+= Subagents isolate verbose exploration, so the main agent keeps its overview. They can read repositories, pasting everything exhausts context, and unrecorded sessions lose the results.
+
+@5.4|S2|M
+Context fills with verbose discovery output during a long session. Which command helps?
++ `/compact`
+- `/memory`
+- `/init`
+- `/resume`
+= `/compact` reduces context usage. `/memory` inspects loaded files.
+
+@5.4|S4|H
+A multi-agent exploration crashed, and you must resume reliably. What's the guide's design?
++ Agents export state to a known location, and a manifest is loaded on resume
+- Restart everything from scratch, since state can't be recovered after any crash of any agent
+- Have every agent keep all of its state in memory, and hope that the crash doesn't recur
+- Ask the model to recollect from general knowledge what it was doing when the crash happened
+= Structured state with a manifest gives crash recovery.
+
+@5.4|S4|M
+Before spawning subagents for phase two, what should the main agent do?
++ Summarize the phase one findings, and inject them into their initial context
+- Nothing, since subagents inherit all of the main agent's phase one findings
+- Copy the full phase one transcript, including every tool result that was returned
+- Delete the phase one findings, in order to give the next phase a clean start
+= Summaries carry knowledge forward without verbosity.
+
+@5.4|S2|H
+Claude now gives contradictory answers about a class it examined earlier. What's the most effective response?
++ Use scratchpad notes or re-check it, and compact or delegate further exploration
+- Tell Claude in strong words that it needs to be more consistent from now on
+- Keep going, since inconsistency is an unavoidable and harmless side effect
+- Increase `max_tokens`, as more output room would fix any problem with memory
+= It's degradation. Persist findings and manage context.
+
+@5.4|S4|E
+What's the benefit of delegating verbose exploration to a subagent?
++ The main agent's context stays focused
+- The subagent's result is always correct
+- The API's price per token is reduced
+- The main agent gets all the raw output
+= Isolation keeps the main context on coordination. Subagents can still be wrong, per-token prices don't change, and returning all the raw output would defeat the purpose.
+
+@5.4|S4|H
+What should a state manifest contain?
++ What each agent completed, where its output is, and what remains
+- All of the raw tool outputs from the whole run, inline
+- A one-sentence statement that the work was progressing
+- The agents' API keys, so that they can reconnect themselves
+= A concise record of what's complete, where outputs are, and what remains lets the coordinator resume. Inline raw outputs are bloated, a sentence is too vague, and keys must never go there.
+
+@5.4|S2|M
+You ask a question in a long session, and the answer ignores a key fact you found an hour ago. Why would a scratchpad have helped?
++ It would keep the fact outside the conversation, to re-read later
+- It would make the model's context window bigger for the rest of that session
+- It would stop any further summarization from happening for that conversation
+- It would send the fact directly to all of the agent's subsequent tool calls
+= A scratchpad holds facts outside the conversation, so they survive as context fades. It doesn't enlarge context, stop summarization, or send anything to tools automatically.
+
+@5.4|S4|H
+Select the two techniques for extended codebase exploration.
++ Subagents for specific verbose questions
++ Scratchpad files recording key findings
+- Reading every file before starting any work
+- Avoiding any record of the findings so far
+- Treating general patterns as equivalent to code
+= Subagents isolate verbose work, and scratchpads keep findings outside the conversation. Reading everything exhausts context, and keeping no record invites degradation.
+
+@5.4|S2|H
+Select the two indicators that context management is needed.
++ References to "typical patterns" rather than specifics
++ Inconsistent answers about previously examined code
+- A short and focused new conversation
+- A clear stack trace for a one-file bug
+- Consistent citations of specific classes
+= Vagueness and inconsistency about code it already examined signal degradation. Short sessions, simple bugs and specific citations suggest that context is healthy.
+
+@5.5|S6|E
+Why can't you rely on "97% accuracy overall" before automating?
++ It may hide poor performance on document types or fields
+- 97% is always too low for automation, whatever the task
+- Accuracy can't be measured on structured extraction tasks
+- It only measures latency, and not the quality of the work
+= A high average can hide a failing document type or field, so validate by segment first. No fixed number is always too low, accuracy can be measured here, and the figure isn't about latency.
+
+@5.5|S6|M
+What should you verify before removing human review for high-confidence extractions?
++ Accuracy by document type and field, across all segments
+- The model's stated confidence, averaged across all documents
+- That the total volume of documents is above a set minimum
+- That customer complaints have remained low in recent weeks
+= Consistent performance across segments comes first.
+
+@5.5|S6|M
+How do you keep measuring error rates for automated, high-confidence extractions?
++ Take a stratified random sample for human review
+- Review only the low-confidence extractions
+- Wait until someone reports a specific error
+- Sample only the most common document type
+= A stratified sample of automated output measures errors and reveals new patterns. Low-confidence review misses errors in what's automated, and complaints or one type give partial coverage.
+
+@5.5|S6|M
+How should field-level confidence thresholds be set?
++ Calibrate them using labelled validation sets
+- Use the model's scores as probabilities directly
+- Set each at 90%, as that's a typical threshold
+- Set them so that review volume is exactly zero
+= Raw scores aren't probabilities until they're checked against labelled data. A blanket 90% is arbitrary, and zero review volume isn't a goal that shows quality.
+
+@5.5|S6|M
+Reviewer capacity is limited. Which extractions should go to reviewers first?
++ Low-confidence fields, and documents with ambiguous or contradictory sources
+- The newest documents, regardless of confidence or any conflicts they contain
+- The documents that have the largest file sizes, as they're the hardest to read
+- A uniform sample across all documents, with no reference to any risk indicators
+= Limited reviewers should go where risk is highest: low confidence, and ambiguous or contradictory sources. Newness, file size and uniform sampling ignore risk.
+
+@5.5|S6|H
+Accuracy's 98% overall, 99.5% on invoices, and 60% on handwritten forms, which are 2% of volume. What's the right conclusion?
++ Don't automate handwritten forms yet, and route them to reviewers
+- Automate everything, as the overall figure is above the 97% target
+- Stop automating everything, as a 60% segment makes all the results invalid
+- Report only the invoices' figure in the team's published quality metrics
+= Keep automating strong segments, and route the weak one to people. The overall figure hides that segment, one weak segment doesn't invalidate the rest, and hiding it isn't honest reporting.
+
+@5.5|S6|H
+Why stratify rather than sample uniformly?
++ Rare, risky segments get enough samples to measure their error rates
+- Stratified samples are always cheaper, whatever the sample size is
+- Uniform sampling can't be used on high-confidence extractions at all
+- Stratification removes the need for any human review of the samples
+= A uniform sample gives small, risky segments very few items, so their error rates can't be measured. Stratifying isn't always cheaper, and it doesn't remove human review.
+
+@5.5|S6|H
+A new vendor's invoice format appears. Audit samples show a new error pattern. What does this demonstrate?
++ Ongoing sampling of high-confidence output detects novel error patterns
+- High-confidence extractions never have to be audited after the launch
+- The confidence calibration must have been correct, so no action is needed
+- The format is unsupported, and that vendor must change the way it invoices
+= That's the value of sampling, so recalibrate and add the segment.
+
+@5.5|S6|M
+A model reports 95% confidence on a field, and it's right 70% of the time in that band. What's the issue?
++ The confidence is poorly calibrated, so thresholds need labelled data
+- The model is working as intended, as confidence and accuracy are unrelated
+- The band's sample must be flawed, as stated confidence can't be wrong
+- The schema is at fault, since it should enforce a minimum confidence
+= Stated and actual accuracy differ here, so thresholds need calibrating on labelled data. Confidence and accuracy should relate, a stated score can be wrong, and a schema can't fix this.
+
+@5.5|S6|H
+Select the two steps before reducing human review.
++ Analyze accuracy by document type and field
++ Calibrate thresholds on a labelled validation set
+- Remove the audit sampling to save budget
+- Trust the model's scores as stated
+- Check only the overall accuracy figure
+= Segment analysis shows whether all types and fields perform well, and calibration makes thresholds meaningful. Stated scores and overall accuracy can mislead, and audit sampling should continue.
+
+@5.5|S6|H
+Select the two things that should go to human review.
++ Low-confidence extractions
++ Documents with contradictory sources
+- All high-confidence invoices with no audit reason
+- Documents that have the fewest pages
+- Every document, regardless of capacity
+= Low confidence and contradictory sources carry the most risk. Page count isn't a risk measure, and sending everything ignores limited capacity.
+
+@5.6|S3|E
+How is source attribution typically lost?
++ Summarization compresses findings without keeping claim-source mappings
+- JSON schemas remove URLs when validating any of the fields
+- Subagents aren't able to read URLs that come from search results
+- The model is forbidden from repeating any source's exact name
+= When findings are compressed, the claim-to-source links vanish unless they're kept explicitly. Schemas don't strip URLs, and neither of the other two is a real limitation.
+
+@5.6|S3|M
+Two credible sources give different market sizes. What should the report do?
++ Present both with attribution, annotating the conflict
+- Pick the one from the source that has the better reputation
+- Average the two values, and report only that single number
+- Omit the statistic, so that the report has no contradictions
+= Show both with sources, and note the conflict. Choosing one by reputation, averaging, or omitting hides the disagreement from the reader.
+
+@5.6|S3|M
+A 2019 figure and a 2024 figure look contradictory. What prevents this confusion?
++ Requiring publication or collection dates in structured outputs
+- Always preferring whichever figure is the larger of the two
+- Removing all of the older sources from every research result
+- Asking the synthesis agent to explain away all the differences
+= With dates attached, a difference in time isn't mistaken for a contradiction. Preferring the larger, deleting older sources, or explaining differences away loses evidence.
+
+@5.6|S3|M
+What must subagents output to preserve provenance through synthesis?
++ Structured claim-source mappings, with URLs, document names and excerpts
+- Long narrative summaries that mention sources in a general way
+- A bibliography that isn't connected to the individual claims in it
+- A confidence score on each claim, with no reference to any source
+= Downstream agents preserve and merge the mappings.
+
+@5.6|S3|H
+How should a document analysis agent handle conflicting values?
++ Complete the analysis with both values annotated, and let the coordinator decide
+- Stop, and return an error, as analyses can't continue when values are conflicting
+- Choose the more plausible value by itself, and leave out the other one altogether
+- Average the two conflicting values, and then record the source of only one of them
+= Conflicts pass upward annotated, before synthesis.
+
+@5.6|S3|M
+How should the report's structure treat findings of differing certainty?
++ Separate well-established findings from contested ones, keeping source characterizations
+- Write them all with equal confidence, for the sake of a consistent reading experience
+- Include only the established ones, and delete anything that has been contested at all
+- Mark everything as contested, in order to avoid making any claim that could be wrong
+= Separate sections keep established and contested findings distinct. Equal confidence overstates, deleting contested material loses information, and marking everything contested says nothing.
+
+@5.6|S3|M
+Financial data, news and technical findings are all in one report. How should they be rendered?
++ Each appropriately: tables, prose, and structured lists
+- All as prose, for a uniform reading experience
+- All as tables, as tables are always more accurate
+- All as bullet points, since these are easiest to scan
+= Match form to content: tables for figures, prose for narrative, and lists for technical findings. Forcing one format makes some content harder to read and loses structure.
+
+@5.6|S3|H
+A synthesis agent merges findings and drops the excerpts "to save space." What's the cost?
++ Claims can no longer be verified against their sources
+- The merged findings will fail JSON schema validation
+- The coordinator will refuse to accept the synthesized output
+- The report's numbers will automatically round to integers
+= Without excerpts and sources, a reader can't check a claim, so mappings must survive merging. Dropping them doesn't cause schema failures, rejections or rounding.
+
+@5.6|S3|H
+Select the two practices for handling conflicting statistics.
++ Include both, with their sources
++ Include their dates and methods, if known
+- Select the value that's most recent, silently
+- Remove both, to avoid any disagreement
+- Rewrite them as one blended approximate value
+= Keep both values, with sources, dates and methods, so that readers can judge. Silently picking one, deleting both, or blending them hides the disagreement.

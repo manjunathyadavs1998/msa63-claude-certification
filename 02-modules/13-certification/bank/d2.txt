@@ -1,0 +1,729 @@
+@2.1|S1|E
+What's the primary mechanism Claude uses to choose among available tools?
++ The tool descriptions
+- The order they're listed in
+- The length of their names
+- The most recently used tool
+= Descriptions are the main selection signal. Order, name length and recency aren't how selection works, though clear names do help.
+
+@2.1|S3|M
+Agents keep confusing `analyze_content` and `analyze_document`, whose descriptions are nearly identical. What's the best first fix?
++ Rename them for their purpose and rewrite the descriptions to state clear boundaries
+- Add a routing classifier that picks the right tool before the model ever sees them
+- Remove one of the tools, and make the other one handle every type of analysis
+- Tell the model in the system prompt to think harder before it chooses a tool
+= Overlap is the root cause, so differentiate them, for example `extract_web_results` with a web-specific description. A classifier over-engineers it, merging creates a vague tool, and "think harder" doesn't remove ambiguity.
+
+@2.1|S1|M
+Which `lookup_order` description best supports reliable selection?
++ "Retrieves one order by ID (digits, e.g. 7781). For customer details, use get_customer."
+- "Retrieves order information from the orders system of the company."
+- "A powerful, flexible, fast tool that handles anything to do with orders."
+- "Looks up things. Use it whenever you need to look something up for someone."
+= It gives format, example, purpose, and a boundary against a similar tool. The others are vague.
+
+@2.1|S1|M
+What should a good tool description include?
++ Input formats, examples, edge cases, and when to use it versus similar tools
+- The tool's internal database schema, plus the service's deployment history
+- A list of the engineers who maintain it, along with their contact details
+- A reminder that the model should be careful and accurate when using it
+= These help selection and correct use. Internal details and generic reminders don't.
+
+@2.1|S3|H
+A generic `analyze_document` tool produces mixed results across tasks. What's the best redesign?
++ Split it into `extract_data_points`, `summarize_content` and `verify_claim_against_source`
+- Add a `mode` string parameter that accepts any instruction, and keep the single tool
+- Keep the tool as it is, and add several hundred words of general usage notes to it
+- Wrap the tool in a subagent, which then decides how the document should be analyzed
+= Purpose-specific tools with defined contracts are clearer to select and validate. A free-form mode keeps the ambiguity, more words on a generic tool don't fix its scope, and a subagent adds layers.
+
+@2.1|S1|H
+Your system prompt says: "Always check the customer's account first when they mention an order." The agent now calls `get_customer` for every order question, despite good descriptions. What's the likely cause?
++ Keyword-sensitive prompt wording is overriding the tool descriptions
+- The tool descriptions are too long, and the model has started ignoring them
+- `get_customer` is listed first, and the model prefers whatever comes first
+- The agent has too few tools, so it falls back to using the most general one
+= Prompt wording can create unintended tool associations. Reviewing the prompt comes before changing the tools. The other options aren't indicated by the evidence.
+
+@2.1|S1|E
+Minimal tool descriptions tend to cause which problem?
++ Unreliable selection among similar tools
+- Faster responses with lower accuracy on schemas
+- Errors from the API about description length
+- Automatic retries on every tool call that's made
+= With little to distinguish them, the model chooses unreliably. The others aren't consequences.
+
+@2.1|S4|M
+A team's `search` tool description reads "searches stuff." Agents often use it for tasks that the `grep_logs` tool does better. What's the proportionate fix?
++ Rewrite both descriptions to state what each searches, and when to prefer the other
+- Delete `grep_logs`, since having two search tools will always cause confusion
+- Add few-shot examples for all possible searches to the system prompt immediately
+- Force `grep_logs` with `tool_choice` for all the requests that mention the word log
+= Improve the descriptions first. Deleting loses capability, examples for every case aren't proportionate, and keyword-based forcing is brittle.
+
+@2.1|S6|M
+Which name and description pair is best for a tool that only reads PDF invoices?
++ `extract_invoice_fields`: "Vendor, date and totals from one invoice PDF. Not for receipts."
+- `process`: "Processes the input data and returns the appropriate result as needed by the task."
+- `doc_tool`: "A document tool. See the internal wiki for details on how it should be used."
+- `extract`: "Extracts everything from any file. Works with whatever the user has provided."
+= It gives a specific name, scope, outputs, and boundary. The others are too general, or point to documents the model can't see.
+
+@2.1|S3|H
+After you improve descriptions, selection is correct in most cases. An ambiguous class of queries still routes wrongly. What's a good next step?
++ Add a few examples of those cases, with the reasoning
+- Remove all the descriptions, and rely on a set of examples only
+- Add a separate model call to double-check every tool selection
+- Rename every tool again, so that they all start with their domain
+= Few-shot examples handle remaining ambiguity (TS 4.2). Removing descriptions loses the main signal, a checker model is over-engineering at this stage, and renaming again doesn't address this class of queries.
+
+@2.1|S1|H
+What should you measure to show that a description change has worked?
++ Selection accuracy on a labelled set of realistic and ambiguous requests
+- The word count of the new description, compared with the old one
+- Whether the model describes the new tool favorably when you ask it
+- The number of developers who have approved the pull request for it
+= Test selection on ambiguous requests, as the guide's preparation section advises. Word count and opinions don't measure behavior.
+
+@2.1|S4|M
+Why state what a tool returns in its description?
++ So the agent can judge whether calling it helps with the current need
+- Because the API validates the output against the description at runtime
+- Because tools with no output described are rejected when they're registered
+- So that the model can skip calling the tool and predict its output instead
+= Knowing the outputs helps the model choose. The API doesn't validate against prose, and predicting results is what you don't want.
+
+@2.1|S1|M
+Two tools both accept "an identifier," and the model passes order numbers to `get_customer`. What helps most?
++ Stating each tool's exact identifier format, with examples, in each description
+- Giving both tools the same parameter name, for reasons of consistency
+- Removing the parameter descriptions, in order to shorten what the model reads
+- Adding a retry, so that a wrong ID eventually finds the right record
+= Specific formats reduce wrong calls. Identical names and removed detail add ambiguity, and retrying wrong IDs wastes calls.
+
+@2.1|S3|E
+Which change directly reduces functional overlap between two tools?
++ Renaming and rescoping them so that each has one clear job
+- Adding a longer system prompt about how good choices matter
+- Increasing the model's iteration limit for ambiguous tasks
+- Listing the two tools further apart in the tool array
+= Rescoping tackles the overlap itself. The others don't change it.
+
+@2.1|S1|H
+A system prompt says "use the billing tool for any money-related question." The agent calls it for refund status, which belongs to `lookup_order`. Which fix addresses the root cause?
++ Rewrite the prompt instruction, so that it no longer ties all money words to one tool
+- Add "refund" to the billing tool's description, so that it can answer those as well
+- Hide `lookup_order` from the agent whenever a message mentions any money
+- Add a post-processing step that reroutes calls after the agent has made them
+= The keyword-sensitive instruction is the cause. The others build around it and widen the wrong tool's scope.
+
+@2.1|S4|H
+Which is the strongest reason to split a generic tool, rather than expand its description?
++ It has several distinct purposes, each needing its own inputs and output contract
+- Its description has reached the maximum number of words that a tool can have
+- More tools always improve the reliability of selection, no matter how many
+- Tools with narrow names are executed by the API at higher priority
+= Distinct contracts justify a split. Too many tools can hurt (TS 2.3), and the other claims are false.
+
+@2.1|S1|E
+A tool's description should tell the model...
++ when to use it, and when to use a similar tool instead
+- which engineer wrote it, and how it was deployed
+- how many times it was called during the last month
+- that it's the best tool available for most tasks
+= Boundaries with similar tools are essential. The others don't help in selecting it.
+
+@2.1|S3|M
+Which description helps most with edge cases for a `web_search` tool?
++ "Returns up to 10 results; an empty list means no matches. For a known URL, use load_document."
+- "Searches the web quickly, and returns the very best possible results for all queries."
+- "Searches. Always use this first before you try anything else that's available to you."
+- "Web search. If it doesn't work, then just try it again until it finally does."
+= It explains limits, what empty means, and a boundary. The others mislead or give no information.
+
+@2.1|S1|H
+Select the two changes that address unreliable selection between `get_customer` and `lookup_order`.
++ Add input formats and example queries to each description
++ State in each description when to use the other tool instead
+- Add a classifier in front of the model as the first step
+- Rename both of them with a shared prefix like `get_data_`
+- Reduce both of their descriptions to one short phrase each
+= Clear formats and boundaries are the proportionate fix. A classifier over-engineers it, while shared names and shorter text add ambiguity.
+
+@2.1|S4|H
+Select the two things to review when good tool descriptions are being ignored.
++ System prompt wording that names a tool in response to keywords
++ Other tool descriptions overlapping with this one's stated purpose
+- The API version's support for system prompts in general
+- The number of characters in the customer's latest message
+- The time of day at which the tool's backend was deployed
+= Prompt keywords and overlapping tools are known causes. The others aren't related.
+
+@2.2|S1|E
+How does an MCP tool signal a failure to the agent?
++ With the `isError` flag on its result
+- By returning an HTTP 200 with empty text
+- By raising `stop_reason: "tool_error"`
+- By omitting its result from the response
+= `isError` is the MCP pattern. Empty text looks like success, that stop reason doesn't exist, and omitting results breaks the exchange.
+
+@2.2|S1|M
+A tool returns "Operation failed" for all failures. Why is this a problem?
++ The agent can't tell whether to retry, fix its input, or tell the customer
+- The string is too short for the API to accept it as a valid tool result
+- It forces the agent to escalate every failure to a human representative
+- It causes the loop to terminate, because the agent reads it as `end_turn`
+= Uniform errors prevent appropriate recovery. They aren't rejected, don't force escalation, and don't change `stop_reason`.
+
+@2.2|S1|M
+`lookup_order` receives an order ID containing letters, and the format must be digits. Which error category fits?
++ Validation
+- Transient
+- Permission
+- Business
+= Invalid input is a validation error, which the agent can fix and retry. Nothing here is a timeout, an access problem or a policy rule.
+
+@2.2|S1|M
+The orders database times out. Which structured response is best?
++ `isError: true`, category transient, `isRetryable: true`, and a short description
+- `isError: false`, with an empty result list, so that the workflow can continue
+- `isError: true`, with "Error" as the only content in the tool's response
+- `isError: true`, category validation, `isRetryable: false`, and a stack trace
+= It's transient, and worth retrying. Empty success hides the failure, and bare "Error" gives nothing to reason with, while the validation category misclassifies it, and a stack trace may leak internals.
+
+@2.2|S1|M
+A refund is refused because it's outside the 30-day window. What should the tool return?
++ A business error, not retryable, with a shareable explanation
+- A transient error that's retryable, in case the policy happens to change soon
+- A validation error asking the agent to change the order date and try it again
+- Success with a zero refund amount, so that the customer doesn't see a failure
+= Policy violations are business errors. Retrying can't help. Changing the date would be wrong, and a false success misleads.
+
+@2.2|S1|E
+Which of these is a retryable error?
++ A brief service timeout
+- A refund above the policy limit
+- A customer ID in the wrong format
+- A user lacking access to a record
+= Timeouts are transient. The others won't succeed if retried unchanged.
+
+@2.2|S3|M
+A search returns zero results for a valid query. What should the tool report?
++ A successful result with no matches, and not an error
+- `isError: true`, category transient, so that it gets retried
+- A generic failure, as nothing useful came back from it
+- `isError: true`, with a suggestion to escalate the query
+= A valid empty result is information. Marking it an error causes pointless retries or escalation.
+
+@2.2|S3|M
+A search tool's backend is unreachable, and the tool returns an empty list as success. What happens?
++ The agent concludes that nothing exists, when in truth the search never ran
+- The agent automatically detects the outage, as the list has no metadata
+- The API converts the empty result into an error before the agent sees it
+- The agent retries anyway, as empty lists always trigger a further call
+= Hiding an access failure as empty results misleads the agent, and it may state wrong conclusions. There's no automatic detection or conversion.
+
+@2.2|S3|H
+Which subagent behavior fits the guide's error recovery design?
++ Retry transient failures locally, and propagate only what can't be resolved
+- Propagate each failure to the coordinator at once, so that it can make all decisions
+- Swallow all failures, so that the coordinator never has to deal with any of them
+- Terminate the whole workflow on any failure, to protect the quality of the report
+= Local recovery for transient errors reduces noise, and unresolved errors go up with context. Always propagating adds load, swallowing hides problems, and terminating over-reacts.
+
+@2.2|S3|H
+When a subagent can't recover from an error, what should it send to the coordinator?
++ The failure type, what was attempted, partial results, and possible alternatives
+- A generic note that the search was unavailable, in order to keep messages short
+- Only its partial results, leaving out any mention that a failure took place
+- A full stack trace from the backend, including its database connection details
+= Structured context enables recovery. A generic note hides details, silent partials mislead, and raw traces leak internals with little value.
+
+@2.2|S1|M
+A user tries to access another customer's invoice. What's the right structured error?
++ Permission error, not retryable, with a safe explanation
+- Transient error, retryable, in case access is restored
+- Empty success, so as to avoid revealing that it exists
+- Validation error, asking them to correct their user ID
+= It's an access failure, and retrying doesn't help. Which details to expose should be considered, but the agent has to know the call didn't succeed.
+
+@2.2|S1|H
+Why include a customer-friendly explanation in a business error?
++ The agent can communicate the reason accurately, rather than inventing one
+- The API displays that field to the customer with no further agent involvement
+- It's needed for the model to accept the tool result as being valid
+- It lets the agent retry with a friendlier request, which might then succeed
+= It gives the agent accurate words to use. The API doesn't display it, it isn't required by validation, and politeness doesn't change policy.
+
+@2.2|S1|M
+What does `isRetryable: false` prevent?
++ Wasted retry attempts on errors that can't succeed
+- The agent from calling any other tools during this turn
+- The tool from being shown in the next request's tool list
+- The customer from ever contacting the support team again
+= It's metadata that guides recovery. It doesn't restrict other behavior.
+
+@2.2|S4|H
+A tool throws a raw exception containing "password rejected for orders-db at 10.2.3.4", and the framework passes that text to the model. What's the concern?
++ Internal details may leak into model context and customer-facing replies
+- Long exception text will cause the model to stop calling any more tools
+- The model will try to fix the database password by itself on the server
+- Exceptions make `stop_reason` become `end_turn`, which ends the run early
+= Catch errors and return safe, categorized messages. The others aren't what happens. *This is a real risk found in framework labs in this course.*
+
+@2.2|S1|H
+How do the protocol and your own design divide this error metadata?
++ `isError` is in MCP, and the other two are fields you design
+- All three are standard MCP fields, and clients validate them on every result
+- None are in MCP, so the flag must be communicated in free text by convention
+- `isRetryable` is the only standard field, as the others are SDK-specific extensions
+= This is the current spec's position, per the MCP tools docs. The guide teaches the metadata pattern. On the exam, follow the guide's usage of these fields.
+
+@2.2|S3|M
+An agent keeps retrying a tool with the same invalid date format. What would stop this?
++ A validation error stating the format expected and that it isn't retryable unchanged
+- A bigger iteration cap, so that the agent eventually finds the correct format
+- A generic failure message, which encourages the agent to try something different
+- A forced tool choice, which makes the agent call the same tool one more time
+= Specific errors let it correct the input. The others prolong the loop.
+
+@2.2|S1|E
+Which is an example of a business error?
++ A refund exceeding the permitted policy limit
+- A database connection that has timed out
+- A malformed email address sent as input
+- An expired token presented by a service
+= A policy violation is a business error. The others are transient, validation, and permission or authentication failures.
+
+@2.2|S3|H
+A search subagent got results from two of three backends before the third failed. What's the best thing to return?
++ The partial results, plus structured details of the failed backend and what was tried
+- A failure with no results, as partial data could mislead the synthesis agent
+- The partial results as a complete success, with no mention of the third backend
+- A request for the coordinator to rerun the whole search from the very beginning
+= Partial results are valuable if the gap is visible. Discarding them wastes work, silence hides the gap, and a full rerun is disproportionate.
+
+@2.2|S4|M
+Your MCP tool got a valid request for a file that doesn't exist. How do you distinguish this from the file server being down?
++ Report "not found" as a clear result, and report the outage as a transient error
+- Treat both as the same, as the agent can't do anything different in either case
+- Return an empty string for both of them, and let the agent work out which it is
+- Report both as permission errors, since neither of them returned any file content
+= Distinguishing them drives different recovery. Uniform treatment prevents it.
+
+@2.2|S1|H
+Select the two fields that help an agent choose a recovery action.
++ An error category, such as transient or business
++ A flag showing whether a retry could succeed
+- The name of the server's hosting region
+- A timestamp of the most recent deployment
+- The size of the tool's source code in lines
+= Category and retryability guide recovery. The others don't.
+
+@2.2|S3|H
+Select the two anti-patterns in tool error handling.
++ Returning empty results as success when a backend failed
++ Using one generic failure message for all failures
+- Returning `isError` with a clear, specific description
+- Retrying a transient failure locally, within a limit
+- Marking policy violations as not being retryable
+= Hiding failures and uniform errors are the anti-patterns. The other three are recommended.
+
+@2.3|S3|E
+An agent has 18 tools, and picks wrongly more often than an agent with 5. Why?
++ More tools increase decision complexity, which degrades selection reliability
+- The API randomly samples tools when more than ten have been registered
+- Agents can only read the first five tool descriptions in any request
+- Large tool lists disable the `tool_use` stop reason for the whole session
+= Too many tools degrade selection. The others aren't real limits.
+
+@2.3|S3|M
+A synthesis agent with access to web search keeps searching rather than synthesizing. What's the best fix?
++ Remove search from its toolset, and restrict it to what its role needs
+- Keep the tool, and add "avoid searching" to its system prompt in capitals
+- Give it more tools, so that it no longer focuses only on using search
+- Force the synthesis tool with `tool_choice` on all of its turns in a run
+= Agents misuse tools outside their specialization, so scoping fixes this. Prompt rules are weaker, more tools make it worse, and forcing every turn removes flexibility.
+
+@2.3|S3|H
+A drafting agent often needs to confirm one statistic, and most checks are simple lookups. Sending each through the coordinator is slowing it down. What's the best design?
++ Give it a scoped `verify_fact` tool, with complex cases via the coordinator
+- Give it the full web search tool, so that it can answer all of its own questions
+- Keep all of the checks routed through the coordinator, since hub-and-spoke is absolute
+- Make it batch the checks, and send them all to the coordinator at the end of a run
+= A limited cross-role tool handles the high-frequency need while keeping complex cases central. Full search invites misuse, keeping everything adds latency, and batching delays verification.
+
+@2.3|S3|M
+A generic `fetch_url` tool lets agents load anything. How do you constrain it?
++ Replace it with `load_document`, which validates that URLs are document URLs
+- Keep it, and add a note saying only documents should ever be fetched
+- Add a second `fetch_url` tool, which is meant for the non-document pages
+- Let it load any URL, then ask the model to discard what it didn't need
+= Constrained tools enforce scope in code. A note is guidance only, and the other two don't reduce what can be fetched.
+
+@2.3|S6|M
+What does `tool_choice: "auto"` allow?
++ The model may call a tool, or respond with text
+- The model must call a tool, but it chooses which
+- The model must call one specific, named tool
+- The API chooses the tool that matches the schema
+= `auto` leaves it open. `any` requires some tool, and forced selection names one. *Build today: forced modes return 400 on Opus 5.5 and Sonnet 5.5. See the docs.*
+
+@2.3|S6|M
+You must guarantee that the model calls a tool instead of replying in text, though it may choose among several. Which setting fits?
++ `tool_choice: "any"`
+- `tool_choice: "auto"`
+- `tool_choice: {"type": "tool", "name": "x"}`
+- `tool_choice: "none"`
+= `any` requires a tool while leaving the choice open. *Build today: `any` returns 400 on Opus 5.5, Sonnet 5.5, Fable 5.1 and Mythos 5.1. Use `auto` with instructions and strict tools, or structured outputs.*
+
+@2.3|S6|M
+`extract_metadata` must run before any enrichment tool. How do you ensure that?
++ Force it on the first turn with `{"type": "tool", ...}`, then continue
+- Set `tool_choice: "any"`, and list it first in the array of available tools
+- Add to its description that it should preferably be called before anything else
+- Run all of the enrichment tools first, and call the metadata tool only if needed
+= Forced selection guarantees the first call. `any` doesn't guarantee which tool, a description is only guidance, and the last reverses the order. *Build today: forced selection is rejected on some current models, so check the docs.*
+
+@2.3|S3|E
+What's the guide's rule of thumb for an agent's tools?
++ About 4–5 tools relevant to its role
+- At least 15 tools for full flexibility
+- Exactly one tool, in order to avoid confusion
+- All of the tools in the organization's catalogue
+= Sets of about 4–5 role-relevant tools keep selection reliable. Fifteen-plus degrades it, one tool is too few for most roles, and an entire catalogue is worse still.
+
+@2.3|S1|M
+A support agent's billing subagent also has shipping and HR tools "just in case." Which risk is greatest?
++ It may misuse those tools, and selection among all of them gets less reliable
+- The model will refuse to run because of the conflicting tool schemas it has
+- The API charges an extra fee for each tool that's defined and not called
+- Other subagents will lose access to those tools while this one holds them
+= Out-of-role tools invite misuse and worsen selection. The others aren't how tools work.
+
+@2.3|S3|H
+A search agent sometimes needs to load a known document, which is the analysis agent's tool. Calls for this are frequent. What's best?
++ Give it a narrow `load_document` tool, and no analysis tools
+- Give it all the analysis tools, because the need occasionally turns up
+- Never allow it, and always round-trip through the coordinator, however often
+- Merge the search and analysis agents into one agent with every tool
+= Limited cross-role tools serve high-frequency needs. Over-granting or merging loses scoping, and a strict round trip adds cost for a common case.
+
+@2.3|S6|H
+You need to extract from invoices, receipts or contracts, with one schema per type, and the type isn't known. Which approach fits?
++ Define one extraction tool per type, and set `tool_choice: "any"`
+- Define one tool and `tool_choice: "auto"`, then parse any text that comes back
+- Force the invoice tool on all documents, as invoices are the most common type
+- Ask the model first in text which type it is, then parse the word it replied with
+= `any` guarantees structured output, and lets the model pick the matching schema. `auto` may return text, forcing one type mislabels the others, and parsing a word adds fragility.
+
+@2.3|S1|M
+A subagent has tools for reading orders, and it needs to issue refunds only through the coordinator. How do you enforce this?
++ Leave the refund tool out of that subagent's definition
+- Tell it in the prompt that it isn't allowed to refund
+- List the refund tool last, so it's less likely to be chosen
+- Give the refund tool a longer name, so that it's harder to use
+= Tool scoping is enforcement. A tool that isn't available can't be called.
+
+@2.3|S4|M
+Which option is a form of scoped tool access?
++ A read-only exploration agent with only Read, Grep and Glob
+- A subagent that has every tool, plus a prompt telling it to be careful
+- A coordinator that gives each subagent all the tools it has itself
+- A single agent that has all the tools from all connected servers
+= A read-only exploration agent has only what its role requires. Giving every tool, with or without a warning, isn't scoping.
+
+@2.3|S3|H
+After a tool is forced on the first turn, what should happen on later turns?
++ Later turns can relax it, so the model chooses its next steps
+- The same forced setting must stay, or the conversation becomes invalid
+- The model must be restarted, since forced tools end the conversation
+- Later turns must use `tool_choice: "none"` so that the output is text only
+= Forcing is for the specific step, with later steps processed in follow-up turns. The others aren't requirements.
+
+@2.3|S3|M
+Why are generic tools riskier than constrained alternatives in multi-agent systems?
++ They let agents act outside their role, as nothing limits what they can do
+- They always cost more per call than tools with narrow scope do
+- They can't be described in the JSON schemas that the API requires
+- They prevent parallel Task calls from running in a single response
+= Constraints enforce role boundaries. The others are false.
+
+@2.3|S1|H
+Select the two settings or practices that guarantee some tool gets called (per the guide).
++ `tool_choice: "any"`
++ `tool_choice: {"type": "tool", "name": "get_customer"}`
+- `tool_choice: "auto"`
+- A prompt saying "you must always call a tool"
+- A very clear description on the most important tool
+= `any` and forced selection guarantee a call. `auto` doesn't, and text is only guidance. *Build today: both forced forms are rejected on some current models.*
+
+@2.3|S3|H
+Select the two changes that reduce cross-specialization misuse.
++ Restricting each subagent's tools to its role
++ Replacing broad tools with validated, narrow ones
+- Giving each subagent every tool, with more instructions
+- Letting subagents borrow tools from each other when needed
+- Raising each subagent's maximum number of iterations
+= Those limit what's possible. The others widen access, or don't relate.
+
+@2.4|S4|E
+Where do you configure an MCP server that the whole team should share?
++ `.mcp.json` in the project
+- `~/.claude.json` in each home directory
+- `CLAUDE.md` at the root of the repository
+- A personal `.env` file in each checkout
+= Project-scoped `.mcp.json` is shared through version control. User config is personal, and the others aren't server configuration.
+
+@2.4|S4|E
+Where do you configure an experimental MCP server that's just for you?
++ `~/.claude.json`
+- `.mcp.json` in the shared repository
+- `.claude/rules/mcp.md` in the repository
+- A note in the team's CLAUDE.md
+= User scope keeps it personal. The others affect the team, or don't configure servers.
+
+@2.4|S4|M
+How do you give a shared `.mcp.json` access to a GitHub token without committing it?
++ Reference `${GITHUB_TOKEN}`, and set it in each developer's environment
+- Commit the token in a private repository, since access there is limited
+- Put the token in CLAUDE.md, with a note that it shouldn't be shared
+- Base64-encode the token in the file, so that it isn't readable directly
+= Environment variable expansion keeps secrets out of version control. Private repos and encoding still commit a secret, and CLAUDE.md is committed text.
+
+@2.4|S4|M
+An agent has three MCP servers configured. When are their tools available?
++ All are discovered at connection time, and available simultaneously
+- Only one server's tools are available at a time, chosen by the user
+- Tools load one by one, when the model first asks about each server
+- Each server needs its own separate agent session to expose its tools
+= Tools from all configured servers are discovered at connection and available together.
+
+@2.4|S4|M
+The agent keeps using Grep on exported data, instead of your richer MCP search tool. What's the best first step?
++ Improve the MCP tool's description to explain its capabilities and outputs
+- Remove Grep from the system entirely, for all tasks in all projects
+- Add a line to CLAUDE.md saying that MCP tools are generally better
+- Rename the MCP tool to `grep`, so that it replaces the built-in tool
+= Better descriptions correct the preference. Removing Grep hurts other tasks, a generic line is weak, and a name clash causes confusion.
+
+@2.4|S2|M
+Your team needs Jira access in Claude Code. What should you do first?
++ Check for an existing community MCP server for Jira
+- Start building a custom MCP server for Jira immediately
+- Scrape the Jira web interface using a Bash script instead
+- Copy Jira tickets into CLAUDE.md, and update them each week
+= Use existing servers for standard integrations, and reserve custom ones for team-specific workflows. The others are fragile, or waste effort.
+
+@2.4|S4|M
+When is a custom MCP server the better choice?
++ For a team-specific workflow that no existing server covers
+- For any standard integration, for the sake of full control
+- Whenever a community server has a slightly different tool name
+- Whenever a developer would like to learn how MCP servers work
+= Build custom servers for team-specific workflows that nothing else covers. Standard integrations should reuse existing servers, and small naming differences or learning goals don't justify one.
+
+@2.4|S4|M
+An agent wastes calls exploring what documentation exists. What MCP feature reduces this?
++ Exposing a content catalog as an MCP resource
+- Adding a prompt that says to explore less often
+- Setting `tool_choice: "none"` during exploration
+- Lengthening the descriptions of all unrelated tools
+= Resources give visibility into what's available, with no exploratory calls.
+
+@2.4|S4|E
+Which is a good example of an MCP resource?
++ A hierarchy of documentation pages, or database schemas
+- A function that issues a refund to a customer
+- A shell command that deletes a temporary directory
+- A credential that's used to log in to a service
+= Resources expose content catalogs. Actions are tools, and credentials shouldn't be exposed.
+
+@2.4|S2|H
+A new developer's agent can't see the team's Linear server, while others can. What's the most likely cause?
++ The server was configured in someone's `~/.claude.json` and not in `.mcp.json`
+- The new developer's model doesn't support more than one MCP server
+- MCP servers only become available after a CLAUDE.md `@import` has run
+- `.mcp.json` only applies to developers who created it on their machine
+= It's the typical diagnosis of a scoping mistake: personal config isn't shared. The others are false.
+
+@2.4|S4|H
+A `.mcp.json` uses `${API_TOKEN}`, and one developer's server fails to authenticate. What should they check first?
++ Whether `API_TOKEN` is set in their own environment
+- Whether the token has been committed into the repository
+- Whether the variable should be added to CLAUDE.md instead
+- Whether `.mcp.json` should be moved to `~/.claude/commands`
+= The value comes from the developer's environment. Committing is what you're avoiding, and the others aren't how it works.
+
+@2.4|S4|H
+You add a fourth MCP server with 30 tools, and tool selection gets worse across the board. Why?
++ All tools are available at once, so choosing gets harder
+- Only the most recently added server's tools are usable by the agent
+- MCP has a hard limit of 75 tools across all connected servers
+- Each server reduces the other servers' descriptions to a single line
+= Tools from all servers are available at once, and more tools increase decision complexity (TS 2.3). The others aren't facts.
+
+@2.4|S2|M
+You're trying an unproven MCP server. Why not put it in `.mcp.json` straight away?
++ It would then affect everyone who pulls the repository
+- `.mcp.json` only supports servers published by Anthropic
+- User-level files are the only ones that can run new servers
+- It would remove all other servers from the team's config
+= Project scope is shared. Try it at user scope first. The others are false.
+
+@2.4|S4|M
+A resource exposes issue summaries. What's the main benefit for the agent?
++ It can see what's available, then fetch only the relevant details
+- It no longer needs any tools at all during the session
+- Its context window automatically grows to hold all the issues
+- It can skip reading tool descriptions for the current session
+= Catalog visibility reduces exploratory calls. The others are false.
+
+@2.4|S4|H
+Which MCP description best stops an agent preferring Grep for ticket lookups?
++ "Full-text search of tickets and comments; use instead of searching exported files."
+- "A ticket tool. It's really good, and it should generally be preferred over the others."
+- "Searches tickets. Uses our internal indexing cluster, which was upgraded during last June."
+- "This tool is MCP-based, so it's considered more advanced than built-in file tools."
+= It explains capabilities, outputs, and when to prefer it. The others make claims or give irrelevant details.
+
+@2.4|S4|H
+Select the two correct scope assignments.
++ Shared GitHub server: `.mcp.json`
++ Personal experiment: `~/.claude.json`
+- Shared GitHub server: `~/.claude.json`
+- Personal experiment: `.mcp.json`
+- Shared token value: committed in `.mcp.json`
+= Team goes in project scope and personal in user scope. Secret values aren't committed.
+
+@2.4|S2|H
+Select the two practices for standard third-party integrations.
++ Prefer an existing community server when it meets the need
++ Keep its authentication token in an environment variable
+- Write a custom server first, then compare it to others
+- Commit its token, so that onboarding is easier for everyone
+- Scrape the product's web pages, rather than use its API
+= Reuse servers and protect secrets. The rest add work or risk.
+
+@2.4|S4|M
+Two MCP servers both expose a `search` capability, and the agent picks the wrong one. Both are correctly configured. What's the best first fix?
++ Make each tool's description state what it searches, and when to prefer the other
+- Disconnect one of the servers, since an agent can use only one server at a time
+- Move one of the servers to user scope, which gives it a lower selection priority
+- Add a CLAUDE.md note saying that the second of the two servers is the better one
+= All servers' tools are available together, so selection depends on descriptions (TS 2.1). The agent can use several servers at once, and scope doesn't set a priority.
+
+@2.5|S4|E
+Which built-in tool finds every call to `processRefund` across a codebase?
++ Grep
+- Glob
+- Write
+- Edit
+= Grep searches file contents, so it finds calls. Glob matches paths, while Write and Edit change files.
+
+@2.5|S4|E
+Which built-in tool finds all files named `**/*.test.tsx`?
++ Glob
+- Grep
+- Read
+- Edit
+= Glob matches path patterns. Grep searches inside files.
+
+@2.5|S2|M
+Edit fails because the text to replace appears in several places. What's the guide's fallback?
++ Read the full file, then Write the modified content
+- Retry the same Edit until one of them happens to match
+- Use Grep to replace it across the repository in one step
+- Use Glob to pick which of the occurrences is to be changed
+= Read + Write is the reliable fallback. Retrying can't make the text unique, and Grep and Glob don't modify files. Adding surrounding context to make the match unique also works in practice.
+
+@2.5|S4|M
+You need to understand an unfamiliar service. What's the best way to begin?
++ Grep for entry points, then Read and follow imports to trace the flows
+- Read every source file first, so that you have complete understanding
+- Write a summary from your general knowledge of services like this
+- Use Glob to list all files, and treat the names as the understanding
+= Build understanding incrementally. Reading everything exhausts context, general knowledge isn't this code, and file names alone aren't enough.
+
+@2.5|S4|M
+A function is re-exported under different names by wrapper modules. How do you find all of its usage?
++ Identify all exported names first, then Grep for each across the codebase
+- Grep only for the original name, as aliases work the same way at runtime
+- Use Glob with the original name, since aliases are visible in the file paths
+- Read the wrapper modules alone, as those files must contain all the callers
+= Tracing across wrappers needs each alias. Searching only the original name misses callers, Glob doesn't read content, and wrappers don't contain all callers.
+
+@2.5|S2|M
+Which tool suits changing one unique line in a file?
++ Edit
+- Write
+- Glob
+- Grep
+= Edit targets unique text. Write replaces the whole file, and the others don't change files.
+
+@2.5|S4|H
+An agent must find where an error message "quota exceeded" comes from. Which sequence is most efficient?
++ Grep for the message, Read the matching file, then Grep for its callers
+- Glob all the files, Read each of them in turn, and then Write a summary
+- Read the main file, then guess which modules are likely to be relevant
+- Bash a loop that prints every file, then ask the model to review the output
+= Search content, then read, then follow. The others waste context, or guess.
+
+@2.5|S2|E
+What does Write do to an existing file?
++ Replaces its contents
+- Appends to the end
+- Edits a unique match
+- Searches it for text
+= Write replaces full contents. Edit makes targeted changes.
+
+@2.5|S4|M
+A reviewer asks for all Kotlin test files in the repo. What's the right tool and pattern?
++ Glob with `**/*Test.kt`
+- Grep with the word "Kotlin"
+- Read with the directory path
+- Edit with `*Test.kt` as its target
+= It's a path pattern. Grep looks in contents, and the others aren't for finding files.
+
+@2.5|S4|H
+An agent runs `grep` through Bash for everything, and it floods the context with long outputs. What's a reasonable improvement?
++ Use the Grep tool with narrow patterns or paths, so that output is focused
+- Keep using Bash, but ask the model to read the output more quickly
+- Switch to Glob for content searches, as it returns fewer results
+- Use Write to save the output, then read back the entire saved file
+= Focused searches limit context. Glob doesn't search contents, and the others don't reduce what's consumed.
+
+@2.5|S2|M
+Edit keeps failing with "no unique match" on a config value that repeats. Besides Read + Write, what would help the Edit succeed?
++ Include more surrounding text, so that the target string is unique
+- Run the Edit twice in quick succession on the same string
+- Use a shorter target, so that it matches more easily somewhere
+- Run Glob first, so that Edit knows which file it's looking at
+= Edit needs a unique match, and more context provides one. A shorter string makes the problem worse. The guide's named fallback remains Read + Write.
+
+@2.5|S4|M
+Why is reading all files upfront a poor exploration strategy?
++ It fills the context with mostly irrelevant content
+- The Read tool is limited to one file per session
+- It prevents Grep from working later in that session
+- Files must be read only in alphabetical order
+= Incremental exploration keeps context useful. The others are false.
+
+@2.5|S4|H
+Select the two correct tool choices.
++ Finding where a config key is used: Grep
++ Finding all `Dockerfile` paths: Glob
+- Finding where a config key is used: Glob
+- Finding all `Dockerfile` paths: Edit
+- Replacing a unique line: Grep
+= Contents go to Grep, paths to Glob, and modifications to Edit or Write.
+
+@2.5|S2|H
+Select the two steps in the fallback when Edit can't find a unique anchor.
++ Read the file's full contents
++ Write back the modified contents
+- Delete the file and start it again from scratch
+- Grep the file repeatedly until the match is unique
+- Glob the directory, to refresh the file's anchor
+= That's the guide's fallback. The others don't perform the change reliably.

@@ -1,0 +1,489 @@
+#S2|Larkspur Software's 25 developers use Claude Code across a Spring Boot backend and a TypeScript frontend. They want consistent code generation, reliable refactoring and useful documentation, and they often run long sessions on an old codebase.
+
+@3.1|S2|E
+Which location holds instructions that only one developer receives, and that teammates never get through version control?
++ `~/.claude/CLAUDE.md`
+- The repository's root `CLAUDE.md`
+- `.claude/CLAUDE.md` in the repository
+- A `CLAUDE.md` in a subdirectory
+= User-level instructions apply only to that user. The others are in the repository, so they're shared.
+
+@3.1|S2|M
+The backend and frontend packages have different standards, and the shared standards live in `docs/standards/`. What's the guide's modular way to include only what each one needs?
++ `@import` of the relevant standards files, in each package's `CLAUDE.md`
+- A copy of all the standards files pasted into each package's `CLAUDE.md`
+- A slash command that developers must remember to run in each new session
+- A single user-level file containing the standards for both of the packages
+= `@import` keeps files modular and selective. *Build today:* the current syntax is written `@path`. Copies drift, commands get forgotten, and user-level isn't shared.
+
+@3.2|S2|M
+Which belongs in a skill, rather than in `CLAUDE.md`?
++ A step-by-step release-notes workflow used about once a month
+- The team's naming convention used in all generated code
+- The rule that all public methods need documentation
+- The project's build and test commands, used every day
+= Skills suit on-demand, task-specific workflows. Always-relevant standards belong in `CLAUDE.md`.
+
+@3.2|S2|H
+A brainstorming skill produces many rejected ideas, which then bias later work in the session. What's the best frontmatter change?
++ `context: fork`, so the exploration stays out of the main conversation
+- `allowed-tools: Write`, so the skill records its ideas to a file only
+- `argument-hint`, so developers provide a narrower topic for brainstorming
+- `paths`, so the skill runs only on files that have brainstorming content
+= Isolating exploratory context is what `context: fork` is for. The others don't stop the output from entering the session.
+
+@3.3|S2|M
+Why might a `.claude/rules/` file with `paths: ["**/*.test.ts"]` be better than a large `CLAUDE.md` section on tests?
++ It loads only when matching files are edited, which reduces irrelevant context
+- It's applied by the API, so the model can never fail to follow what it says
+- It's stored in each user's home directory, so developers can each change it
+- It runs as a hook, so each test is executed automatically after any edit
+= Path-scoped rules are conditional context. They're still instructions, not enforcement, and they aren't hooks.
+
+@3.4|S2|M
+Which is the best fit for plan mode?
++ Choosing how to restructure a monolith module into services, with several valid approaches
+- Renaming one local variable within a single short function
+- Fixing a typo in a log message whose location is known
+- Adding a date check to a function that's already been identified by a failing test
+= Architecture and multiple approaches call for plan mode. The rest are simple, well-scoped changes.
+
+@3.4|S2|H
+A multi-phase refactor keeps running out of context during discovery, before implementation begins. What's the best approach?
++ Use the Explore subagent for discovery, keeping its summaries in the main session
+- Turn off plan mode, so that discovery goes straight into making the changes
+- Ask Claude to skip discovery, and work from what's typical for Spring Boot projects
+- Put the full source for each file into `CLAUDE.md` for the rest of the phases
+= Explore isolates verbose discovery and returns summaries. Skipping discovery invites errors, and pasting source wastes context.
+
+@3.5|S2|M
+A developer describes a CSV transformation in prose, and Claude's output differs on each attempt. What should they do next?
++ Provide 2–3 concrete input and output examples
+- Repeat the same prose with stronger emphasis
+- Ask Claude to explain the prose back to them
+- Switch to a much shorter prose description
+= Examples are the guide's answer when descriptions are interpreted inconsistently.
+
+@3.5|S2|H
+Three independent bugs exist in unrelated modules. How should the developer give feedback, and why?
++ Sequentially, because fixes for independent issues don't interact
+- All at once, because a single message always gives the best results
+- All at once, because Claude can only remember one message at a time
+- Sequentially, because a session can contain just one fix for each file
+= Independent issues can go one at a time. Together is for interacting problems. The other reasons are false.
+
+@5.1|S2|M
+An API-based helper "forgets" the previous question on each turn. What's the most likely cause?
++ The client isn't sending the complete conversation history in each request
+- `stop_reason` was `end_turn`, which erases the server's stored memory
+- The model's memory fills up after each response has been returned
+- The system prompt is limiting the amount that the model can recall
+= The Messages API needs the history each time. Coherence depends on passing it. `end_turn` erases nothing.
+
+@5.1|S2|H
+A long session's progressive summary changes "retry 3 times, then fail after 30s" into "retry a few times". Which principle does this show, and what prevents it?
++ Summaries lose specifics, so keep such values in a persistent facts block outside the summary
+- Summaries lose only customer details, so this technical detail is safe to lose in the session
+- Models round all numbers by design, so an instruction not to round is what prevents it
+- Long sessions always use a smaller model, so select a larger model at the start of the session
+= Progressive summarization risks condensing numbers. A separate facts block preserves them. The other claims aren't true.
+
+@5.4|S2|M
+A developer asks about a class found an hour ago, and Claude answers with generic advice. What should the agent have been doing during exploration?
++ Maintaining a scratchpad file of key findings, and referring back to it
+- Re-reading every file in the repository before answering each question
+- Avoiding reading any files, so that its context stays as small as possible
+- Using a smaller `max_tokens`, so that answers don't exceed a limit
+= A scratchpad persists findings across context boundaries. Rereading everything reintroduces the problem.
+
+@5.4|S2|M
+Between two phases of a large investigation, what does the guide recommend?
++ Summarize key findings from one phase, and inject them into the next phase's subagents
+- Keep all raw output from the first phase in the main session for later phases
+- Discard all findings, so that each phase can look at the code without any bias
+- Run the phases in reverse order, so that the later findings are considered first
+= Summarizing, then injecting, preserves findings without the raw output. The other approaches waste context or lose work.
+
+@5.4|S2|H
+An overnight multi-agent migration analysis crashes. What should recovery rely on, by the guide?
++ Each agent's exported state in a known location, plus a manifest the coordinator loads on resume
+- The model's memory of its earlier work, which resumes automatically once the process has been restarted
+- A fresh run of the entire analysis, which is always more reliable than any recovery
+- The final report file, which holds the complete working state of every agent involved
+= Structured exports and a manifest let the coordinator resume and inject state into prompts. The others either lose work, or assume state that isn't there.
+
+@5.4|S2|E
+What's the main value of delegating "find all usages of this config key" to a subagent?
++ The verbose output stays out of the main agent's context
+- The subagent has access to memory from all earlier sessions
+- The subagent can use tools without any restrictions at all
+- The main agent's model automatically becomes faster for later work
+= Isolation is the value. Subagents don't have those other properties by default.
+
+#S3|Quillstone Research runs a multi-agent system on the Agent SDK. The coordinator delegates to specialists for web search, document analysis, synthesis and report writing. Clients rely on its cited reports for investment decisions.
+
+@1.1|S3|E
+Which value should keep the coordinator's loop running?
++ `stop_reason` is `tool_use`
+- `stop_reason` is `end_turn`
+- The response includes some text
+- The response is shorter than usual
+= `tool_use` means tools must run and the loop continues. `end_turn` ends it. Text and length aren't signals.
+
+@1.2|S3|M
+What's isolated about a subagent's context in this system?
++ It doesn't automatically inherit the coordinator's conversation history
+- It can't receive anything at all from the coordinator, including findings
+- It shares context with its sibling subagents, but not with its coordinator
+- It must run on a different model from the one the coordinator is using
+= Isolation means no automatic inheritance. Findings can still be passed in the prompt.
+
+@1.2|S3|H
+Choose the coordinator responsibilities described in the guide. **Select 2.**
++ Task decomposition and delegation
++ Aggregating results, and deciding which subagents to invoke
+- Holding the shared memory that all subagents read directly
+- Letting specialists resolve errors among themselves
+- Writing each subagent's tool code at runtime
+= The guide names decomposition, delegation, aggregation and selection, with all communication and error handling going through the coordinator.
+
+@1.3|S3|M
+Which `AgentDefinition` fields does the guide highlight?
++ Description, system prompt and tool restrictions
+- API key, region and billing account
+- Temperature, seed, stop sequences and retries
+- Database URL, cache size and timeout
+= The guide names descriptions, system prompts and tool restrictions. The others aren't what it highlights.
+
+@1.3|S3|H
+Which prompt best prepares the synthesis subagent?
++ The goal and quality criteria, plus complete findings as structured data with source metadata
+- "Synthesize the findings from earlier", relying on the coordinator's history being there
+- A list of numbered steps for synthesis, with a request to look up what earlier agents found
+- The goal only, as a subagent automatically knows what its sibling subagents have discovered
+= It needs goals, criteria and the complete findings. Nothing is inherited, and procedural steps reduce adaptability.
+
+@1.6|S3|M
+A new client topic is broad and poorly defined, and the useful directions aren't known up front. Which decomposition fits?
++ Dynamic: let intermediate findings shape subsequent subtasks
+- Fixed: use the same five subtopics as last month's unrelated report
+- None: send one prompt with the whole topic to a single subagent
+- Reverse: write the report, then look for sources that support it
+= Open-ended work suits adaptive decomposition. A fixed list ignores discovery, and writing first would bias the sources.
+
+@1.7|S3|M
+An analyst wants to explore a bull case and a bear case from one shared analysis. What's the right session approach?
++ Fork from the analysis, once per case
+- Resume the same session for both cases
+- Use `/compact`, and write both in one session
+- Use `-p`, and rely on the output being shared
+= Forks give independent branches from a shared baseline.
+
+@1.4|S3|H
+A compliance policy says no report may be sent until a source check has passed. Which implementation is appropriate?
++ A programmatic gate blocks the send step until the check's result is recorded
+- The coordinator's system prompt asks it to always run the check before sending
+- A few-shot example shows the check being run before a report is sent
+- The report subagent includes a line stating that sources have been checked
+= A required order needs a programmatic prerequisite. The others are probabilistic, and a statement in a report proves nothing.
+
+@2.1|S3|M
+A generic `analyze_document` tool gives uneven results. Which change follows the guide?
++ Split it into `extract_data_points`, `summarize_content` and `verify_claim_against_source`
+- Add a required `instructions` string, so that callers can say exactly what they'd like
+- Rename it `analyze_document_v2`, and keep its description exactly as it was before
+- Add three more generic tools, so that Claude has more choices for each document
+= Purpose-specific tools with defined contracts are the guide's approach. A free-form parameter keeps the tool generic.
+
+@2.2|S3|M
+Which responsibilities belong to a search subagent facing a transient failure?
++ Recover locally, and propagate only what it can't resolve, with partial results and attempts
+- Propagate every failure at once, so that the coordinator can make every retry decision
+- Stop the whole workflow straight away, so that no partial data can enter the report
+- Report success, and leave out the failure, so that the coordinator's plan isn't disrupted
+= Local recovery with structured propagation is the guide's approach. The others are its anti-patterns, or overload the coordinator.
+
+@2.3|S3|H
+Why is limiting agents to 4–5 tools, rather than 18, an example of a principle rather than a rule?
++ The point is that scope affects selection reliability, and the number is only an illustration
+- The API rejects a request whenever it contains a tool list longer than exactly five entries
+- MCP servers can only ever expose four or five tools at any one time
+- The exam guide has a table setting a maximum number for each of the agent types
+= The guide's example illustrates decision complexity. It isn't a protocol limit.
+
+@2.4|S3|M
+Tools from three configured MCP servers appear for the agent. When are they discovered, and how are they available?
++ At connection time, and all are available simultaneously
+- On each request, one server at a time, in alphabetical order
+- Only after a model has requested a server by name
+- At deployment, and only one server is active per session
+= The guide says tools from all configured servers are discovered at connection and available simultaneously.
+
+@5.3|S3|M
+Which subagent message gives the coordinator the most useful information?
++ `{"failure":"timeout","query":"EU tariffs 2026","partial":[2 results],"alternatives":["trade database"]}`
+- `{"status":"search unavailable","message":"The search service could not be reached. Please try again."}`
+- `{"status":"ok","results":[]}`
+- `{"error":true}`
+= Failure type, query, partial results and alternatives enable recovery. Generic statuses hide context, and empty success is misleading.
+
+@5.6|S3|M
+A report needs earnings figures, market news and a technical analysis. How should the synthesis render these?
++ Financial data as tables, news as prose, and technical findings as structured lists
+- All of it as bullet points, so that the whole report is uniform throughout
+- All of it as prose, so that the report reads smoothly from start to finish
+- All of it as tables, so that readers can compare any item with any other
+= The guide says to render content types appropriately, instead of converting everything to a uniform format.
+
+@5.6|S3|H
+A source says "preliminary estimate", and the synthesis writes the figure as established fact. What should change?
++ Preserve source characterizations and separate well-established findings from contested ones
+- Remove all qualifiers from reports, so that clients can read them more easily
+- Ask the report subagent to add "approximately" to every figure in every report that it produces from now on
+- Exclude all preliminary sources, including the only sources on a given topic
+= The guide requires preserving characterizations and methodological context, with explicit sections for established and contested findings.
+
+#S4|Pinecrest Bank's platform team builds a developer productivity agent on the Agent SDK. It explores legacy Java services, generates boilerplate and automates repetitive changes. It uses built-in tools and connects to Jira and an internal documentation service over MCP.
+
+@1.1|S4|M
+What makes this agent model-driven, as opposed to a pre-configured tool sequence?
++ Claude decides which tool to call next, based on what it has already learned
+- The tool order is held in a configuration file that the team can edit
+- Every step is approved by a human before the tool runs
+- The agent runs on the newest available Claude model
+= The guide defines this distinction by who decides the next action.
+
+@1.2|S4|H
+A coordinator always runs exploration, generation, testing and documentation, even for "what does this class do?" What's the guide's lesson?
++ Analyze what the query needs, and invoke only the relevant subagents
+- Always run all subagents, so that results are consistent across all queries
+- Have the user choose the subagents, as coordinators can't analyze a query
+- Add a caching layer, so that the full pipeline is cheaper on simple queries
+= Dynamic selection avoids unnecessary subagents. Caching keeps the wasted pipeline.
+
+@1.3|S4|M
+Which statement is correct about spawning subagents in the guide's terms?
++ The coordinator's `allowedTools` must include `"Task"`
+- Subagents share the coordinator's memory automatically
+- Only one subagent can run in any session
+- Each subagent has to be a separate MCP server
+= The guide states the first, and it says subagents don't inherit context. *Build today:* the tool is named `Agent`.
+
+@1.5|S4|H
+Automation must never run `Bash` commands that touch the production database, and failures should be redirected to a ticket. Which is most appropriate?
++ A tool-interception hook that blocks such commands, and redirects to a ticket workflow
+- A PostToolUse hook that reports the command to the platform team, once it has finished running
+- A note in `CLAUDE.md` asking the agent never to touch production data
+- A subagent whose only job is reading the logs for any production access
+= A pre-execution block is a guarantee. PostToolUse runs too late, a note is guidance, and log reading is detection only.
+
+@1.5|S4|M
+Which task is the best fit for a PostToolUse hook?
++ Normalizing mixed timestamp formats from two MCP tools
+- Preventing a tool from running above a certain limit
+- Choosing which subagent should handle a user's query
+- Writing the final answer for the engineer to read
+= PostToolUse transforms results before the model processes them. Blocking must happen before execution.
+
+@1.6|S4|H
+A review of a large generated change misses cross-module bugs, and says conflicting things about similar code. Which decomposition does the guide support?
++ Analyze each file individually, then run a cross-file integration pass
+- Analyze all the files at once, and ask the model to take more care
+- Analyze only the largest file, and assume the other files are similar
+- Analyze the files in random order, then keep only the first findings
+= Per-file plus integration avoids attention dilution. The others ignore the problem.
+
+@1.7|S4|M
+When should an engineer prefer resuming over starting fresh?
++ When prior context is mostly still valid
+- When most prior tool results are stale
+- When the code has been heavily rewritten
+- When they want an independent reviewer
+= Resume when context is mostly valid. Stale results call for a fresh session with a summary, and independent review needs a separate instance.
+
+@1.2|S4|M
+Exploration subagents return overlapping dependency analyses. Which is the coordinator's best fix?
++ Assign each subagent a distinct area, such as a service or dependency type
+- Tell the subagents to compare their results directly with each other
+- Remove all but one subagent, however large the codebase turns out to be
+- Discard any finding that appears in more than one subagent's output
+= Partitioning minimizes duplication. Direct comparison breaks routing, and agreement isn't a reason to discard.
+
+@2.1|S4|M
+Which tool description best follows the guide?
++ "Searches Jira issues by JQL. Input: a JQL string. Returns: key, summary, status. Use for issues, not documentation."
+- "Searches for things in Jira. This tool is very powerful and is useful for a wide variety of tasks you may have."
+- "Jira search."
+- "Use this tool whenever you need information of any sort, because it's the best tool available to the agent."
+= It states purpose, inputs, outputs and boundaries. The others are vague, minimal or overlapping.
+
+@2.2|S4|M
+Jira returns a permission error for a restricted project. What should the MCP tool do?
++ Return `isError` with a permission category, marked not retryable, and describe what's wrong
+- Return an empty list, which keeps the agent from raising unnecessary alarms
+- Retry until it succeeds, since permissions are often restored in a moment
+- Return text saying "Operation failed", because further details aren't useful to the agent in this case
+= Permission errors are non-retryable, and they need a clear description. An empty list falsely implies no issues.
+
+@2.4|S4|E
+The team needs a Jira integration. What does the guide suggest first?
++ Use an existing community MCP server, and reserve custom servers for team-specific workflows
+- Build a custom MCP server, because custom servers always fit a team's needs better than community ones
+- Skip MCP, and paste the Jira data into `CLAUDE.md` each morning before work
+- Give the agent `Bash`, and have it write a new Jira client for each request
+= Standard integrations should use community servers. Custom servers are for team-specific needs.
+
+@2.4|S4|M
+Which belongs in `.mcp.json`?
++ `"Authorization": "Bearer ${JIRA_TOKEN}"`
+- `"Authorization": "Bearer abc123-real-token"`
+- `"Authorization": "see the wiki page for the token"`
+- `"Authorization": "read ~/.claude/CLAUDE.md"`
+= Environment expansion keeps credentials out of version control. A real token would be committed, and the others don't work.
+
+@2.5|S4|M
+Which sequence best builds understanding of a legacy flow?
++ Grep for the entry point, then Read and follow imports to trace the flow
+- Read every file in the repository, then Grep for whatever seems relevant
+- Glob for all Java files, then Write a summary of each, then read those
+- Edit the entry point to add logging, then run it in the production system
+= The guide describes incremental understanding, rather than reading everything upfront.
+
+@2.5|S4|H
+An agent needs to find where an error message is produced, and then see how the function is called. Which tools fit? **Select 2.**
++ Grep for the error message text
++ Grep for the function's name to find its callers
+- Glob for the error message text
+- Write to create an index of error messages
+- Edit to search through file contents
+= Grep searches contents. Glob matches paths, and Write and Edit modify files.
+
+@2.3|S4|M
+You want to be sure the agent responds with a tool call and not conversational text, but it may choose the tool. Which setting fits, in the guide's terms?
++ `tool_choice: "any"`
+- `tool_choice: "auto"`
+- `tool_choice: {"type": "tool", "name": "search"}`
+- `max_tokens: 1`
+= `any` requires some tool while leaving the choice open. *Build today:* it's rejected on some current models.
+
+#S5|Ironwood Commerce runs Claude Code in its pipeline. It reviews every pull request before merge, runs a nightly security audit, generates tests and posts findings to developers. Findings must be precise and actionable.
+
+@3.6|S5|M
+Which is the mechanism for giving CI-invoked Claude Code its testing standards and review criteria?
++ `CLAUDE.md` in the repository
+- A CI runner's `~/.claude/CLAUDE.md`
+- A long `--resume` session history
+- An environment variable holding each rule
+= The guide names `CLAUDE.md` as the mechanism. Runner home files aren't shared in the repo. *Build today:* `--bare` skips `CLAUDE.md`.
+
+@3.6|S5|H
+Which pipeline command is best for automated, parseable, non-interactive review?
++ `claude -p "..." --output-format json --json-schema "$SCHEMA"`
+- `claude "..." --output-format text`
+- `claude --resume last`
+- `claude -p "..." --output-format text --append-system-prompt "Reply in JSON"`
+= It's non-interactive, structured and schema-checked. The others wait for input or return text.
+
+@3.2|S5|M
+Reviewers want the same review procedure available to everyone, through the repo. Which location is right, in the guide's terms?
++ `.claude/skills/review/SKILL.md` or `.claude/commands/review.md`
+- `~/.claude/skills/review/SKILL.md` or `~/.claude/commands/review.md`
+- `~/.claude/commands/review.md`
+- `~/.claude.json`
+= Project-scoped files are shared. The others are personal.
+
+@4.1|S5|E
+Which instruction is an explicit criterion?
++ "Report SQL built by string concatenation with user input. Skip formatting issues."
+- "Report only the issues that you're highly confident about, and leave out everything else."
+- "Be conservative about what you report here."
+- "Report issues a senior engineer would care about."
+= It defines what to report and what to skip. The rest are vague, or based on confidence.
+
+@4.1|S5|M
+Severity labels vary between runs for the same issue. What's the best fix?
++ Define each level, with concrete code examples
+- Add a sentence asking the model to be consistent
+- Remove severity labels from all findings entirely
+- Average severity across three different runs
+= Concrete criteria and examples give consistent classification.
+
+@4.1|S5|H
+What's the guide's main concern about a high false-positive category?
++ It undermines developers' confidence in accurate categories as well
+- It costs much more than other categories to run through the API
+- It breaks the JSON schema used for the review's findings
+- It makes the batch API stop processing the job in progress
+= False positives erode trust across categories. The other claims aren't what's described.
+
+@4.2|S5|M
+Which few-shot example design most reduces false positives?
++ Pairs showing an acceptable pattern and a similar genuine issue, with the reasoning
+- A dozen obvious bugs, along with the exact output format that's expected for each of them
+- One example of a clean file, and nothing else
+- Several examples of the same bug in different languages
+= Distinguishing acceptable from genuine, with reasoning, supports generalization.
+
+@4.2|S5|H
+Findings are correct, but in varying formats that are hard to act on. What's the guide's most effective technique?
++ Few-shot examples showing location, issue, severity and suggested fix
+- Longer prose instructions that describe the desired output for each finding
+- A request to write the findings out with greater care
+- A larger model, with no changes to the prompt at all
+= Few-shot examples are the guide's answer when instructions alone give inconsistent format.
+
+@4.3|S5|M
+The schema marks `suggested_fix` as required, but some findings have no clear fix, and invented fixes have appeared. What should change?
++ Make `suggested_fix` nullable
+- Add a minimum string length for that field
+- Add "be accurate" to the system prompt
+- Remove findings that have no clear fix
+= Nullable removes the pressure to fabricate. A minimum length makes it worse, and dropping findings loses valid issues.
+
+@4.4|S5|M
+Which schema field supports later analysis of why developers dismiss findings?
++ `detected_pattern`
+- `custom_id`
+- `stop_reason`
+- `isRetryable`
+= `detected_pattern` records which construct triggered a finding. The others serve other purposes.
+
+@4.5|S5|E
+Which job suits the Message Batches API?
++ The nightly security audit
+- The check that blocks each merge
+- A developer's live question
+- An interactive debugging session
+= Batches fit non-blocking, latency-tolerant work, as there's no latency guarantee.
+
+@4.5|S5|M
+A manager wants to save 50% by moving pre-merge reviews to batch. What's the best response?
++ Batch has no latency guarantee and can take up to 24 hours, so blocking checks should stay synchronous
+- Batch is fine for pre-merge reviews, as it's always finished within a few minutes
+- Batch can't be used for any code analysis, as it doesn't support the code in requests
+- Batch is fine for pre-merge reviews, as long as developers submit a smaller number of files in each pull request
+= Blocking workflows don't suit batch. The other statements misstate what batch does.
+
+@4.5|S5|H
+Why can't a batch request carry out a multi-turn audit that runs tools as it goes?
++ Batches can't execute tools mid-request and return the results within that request
+- Batches don't accept any `tools` parameter in a request, in any form
+- Batches are limited to one document of a very small size for each job
+- Batches require a human to approve each of the tool calls that are made during the audit
+= The guide says batches don't support multi-turn tool calling within a request.
+
+@4.6|S5|M
+Why is a second, independent Claude instance better at review than asking the generator to double-check itself?
++ It doesn't carry the generator's reasoning context, so it's less inclined to accept prior decisions
+- It always runs on a stronger model, whichever configuration has been selected
+- It has access to the generator's private thinking, so it can see where the generator's mistakes came from
+- It runs with extended thinking, which self-review is not able to use at all
+= Independence is the point. The guide says independent instances beat self-review instructions and extended thinking.
+
+@4.6|S5|H
+A team wants to skip per-file analysis for large PRs, and just use extended thinking on one pass. What's the guide's position?
++ Split them into per-file passes plus integration passes, to avoid attention dilution and contradictory findings
+- Extended thinking fully replaces multi-pass review, so it's the simplest and most effective answer for large changes
+- Large PRs shouldn't be reviewed by a model, so the team should send them only to human reviewers
+- A single pass is enough if its output is restricted by a schema that requires per-file sections
+= Multi-pass is the guide's design. A schema shapes the output without fixing the attention problem.

@@ -1,0 +1,606 @@
+[
+ {
+  "n": 1,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.2",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "An access failure and a valid empty result need different handling, so the tool must distinguish them. Retrying wastes calls on real empties, treating every empty as an error causes needless escalation, and prompting can't reveal which one occurred."
+ },
+ {
+  "n": 2,
+  "answer": [
+   "A"
+  ],
+  "ts": "5.2",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "Sentiment isn't a proxy for complexity, and this case is within the agent's capability, so acknowledge it and offer to resolve it. An explicit request for a human, including a reiterated one, must be honored."
+ },
+ {
+  "n": 3,
+  "answer": [
+   "D"
+  ],
+  "ts": "1.4",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "Humans can't see the transcript, so the summary must stand alone and be actionable. A link assumes access they lack, a raw dump is slow to use, and scores don't help them resolve the case."
+ },
+ {
+  "n": 4,
+  "answer": [
+   "C"
+  ],
+  "ts": "2.2",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "Uniform errors prevent appropriate recovery. Structured metadata separates a transient failure from a business rule. A retry limit still can't tell them apart, codes alone leave interpretation to the model, and retrying policy refusals is wasted work."
+ },
+ {
+  "n": 5,
+  "answer": [
+   "D",
+   "E"
+  ],
+  "ts": "1.5",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "Rules that must always hold, particularly financial and identity rules, need deterministic enforcement. Tone, suggestions and length are judgment calls, where an occasional miss is acceptable, so prompt guidance fits them."
+ },
+ {
+  "n": 6,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.5",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "The call has to be stopped before it runs, deterministically, and redirected. `PostToolUse` runs after the refund has happened, descriptions and examples are probabilistic, and a nightly job only acts after the money has moved."
+ },
+ {
+  "n": 7,
+  "answer": [
+   "B"
+  ],
+  "ts": "2.3",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "Too many tools increase decision complexity, and scoping restores reliability. Prompting doesn't reduce the choices, uniform length isn't a principle, and forcing tools by keyword removes the model's judgment."
+ },
+ {
+  "n": 8,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.4",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "The rule must always hold and involves money, so it belongs in the same programmatic gate, based on real tool results. Prompt rules and examples are probabilistic, and repeating a number doesn't establish ownership."
+ },
+ {
+  "n": 9,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.5",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "Normalizing results in code before reasoning is deterministic. A prompt table leaves conversion to the model, the backends can't honor a requested format, and a subagent is disproportionate for a mechanical conversion."
+ },
+ {
+  "n": 10,
+  "answer": [
+   "C"
+  ],
+  "ts": "2.1",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "Keyword-sensitive prompt wording can override good descriptions, and this instruction fits the symptom exactly. Nothing suggests a length or ordering effect, and a classifier is over-engineering before you've fixed the wording."
+ },
+ {
+  "n": 11,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.1",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "H",
+  "why": "The anti-pattern is an arbitrary cap as the primary stop. A higher number keeps that flaw. A cap remains sensible as a guard against runaway loops, so removing every limit goes too far, and separate sessions lose shared context."
+ },
+ {
+  "n": 12,
+  "answer": [
+   "C"
+  ],
+  "ts": "1.4",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "Multi-concern requests are decomposed, investigated with shared context and synthesized. Separate sessions cause the contradictions you're seeing, deferring leaves issues unresolved, and several concerns alone don't justify escalation."
+ },
+ {
+  "n": 13,
+  "answer": [
+   "C"
+  ],
+  "ts": "5.1",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "Transactional facts should live outside summarized history, in a block included in every prompt. More frequent summaries still compress them, an instruction is probabilistic, and asking customers to repeat themselves harms the experience."
+ },
+ {
+  "n": 14,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.1",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "The loop must follow `stop_reason`. A response can hold text and `tool_use` together, so text says nothing about completion. Prompting Claude to stop writing text is probabilistic, phrase lists parse natural language, and a confirmation call adds cost without fixing the control flow."
+ },
+ {
+  "n": 15,
+  "answer": [
+   "A"
+  ],
+  "ts": "2.4",
+  "scenario": "Customer Support Resolution Agent",
+  "level": "M",
+  "why": "Environment variable expansion shares the configuration while keeping secrets out of version control. A private repo still commits the secret, per-developer setup loses the shared config, and Base64 is encoding rather than protection."
+ },
+ {
+  "n": 16,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Partitioning scope prevents overlap at its source, and that's the coordinator's job. Deduplication treats a symptom without adding coverage, more identical agents add more duplicates, and direct messaging breaks hub-and-spoke."
+ },
+ {
+  "n": 17,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Goals and quality criteria let subagents adapt, while procedures break when reality differs. More steps and forced tools increase rigidity, and moving the steps doesn't change the problem."
+ },
+ {
+  "n": 18,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Subagents should recover locally from transient errors, and propagate only what they can't resolve, with context. Infinite retries hang, hiding the failure conceals a gap, and terminating discards good work."
+ },
+ {
+  "n": 19,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.1",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Overlapping descriptions are the root cause, and differentiating them is the proportionate first step. A routing layer is over-engineered, merging creates a vaguer tool, and thinking harder can't resolve descriptions that give no way to tell them apart."
+ },
+ {
+  "n": 20,
+  "answer": [
+   "A",
+   "E"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Attribution survives only if it's structured and explicitly carried forward. A bibliography can't link a claim to a source, confidence doesn't locate a source, and subagents can't read another agent's history."
+ },
+ {
+  "n": 21,
+  "answer": [
+   "C"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Multiple Task calls in one response run in parallel. Separate turns are sequential. There's no such option, separate coordinators lose central control, and one combined task invites attention dilution."
+ },
+ {
+  "n": 22,
+  "answer": [
+   "C"
+  ],
+  "ts": "2.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "A constrained tool limits what's possible, while a prompt is only guidance. Logging detects misuse afterward, and summarizing pages doesn't stop the wandering."
+ },
+ {
+  "n": 23,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Hub-and-spoke gives observability, consistent error handling and controlled information flow. Shared memory and a subscriber aren't part of the pattern and isolated contexts don't work that way, and uniform logs leave uncontrolled routing in place."
+ },
+ {
+  "n": 24,
+  "answer": [
+   "D"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Subagents receive only what's explicitly passed, so complete findings with sources must be in the prompt. Adding search invites misuse, formatting detail can't supply missing content, and there's no shared memory to expire."
+ },
+ {
+  "n": 25,
+  "answer": [
+   "A"
+  ],
+  "ts": "5.6",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Conflicts are annotated with attribution, and dates prevent temporal differences being mistaken for contradictions. Averaging and silently choosing lose information, and dropping both loses useful findings."
+ },
+ {
+  "n": 26,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.6",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Open-ended investigation suits dynamic decomposition, because the next step depends on the findings. A longer fixed plan is still fixed, one large pass dilutes attention, and review doesn't change what's researched."
+ },
+ {
+  "n": 27,
+  "answer": [
+   "A"
+  ],
+  "ts": "2.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "A scoped cross-role tool serves the high-frequency need while complex cases go through the coordinator. Full search invites misuse, deferring checks undermines drafting that depends on them, and pre-collecting everything isn't feasible."
+ },
+ {
+  "n": 28,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.4",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Resources give visibility into available data without exploratory calls. A prompt doesn't supply the missing information, higher caps waste more, and one tool per report degrades tool selection."
+ },
+ {
+  "n": 29,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "The coordinator should select subagents dynamically. Removing search breaks other requests, a routing subagent duplicates the coordinator's job, and subagents lack the overall view needed to decide."
+ },
+ {
+  "n": 30,
+  "answer": [
+   "B"
+  ],
+  "ts": "2.1",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Generic tools should be split into purpose-specific tools with defined input and output contracts. A free-text mode keeps the ambiguity, output detection treats a symptom, and an instruction is only guidance."
+ },
+ {
+  "n": 31,
+  "answer": [
+   "C"
+  ],
+  "ts": "5.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Referring to typical patterns is a sign of context degradation, and scratchpad files persist key findings across context boundaries. Asking for attention doesn't restore lost detail, starting blank repeats work, and output limits aren't the problem."
+ },
+ {
+  "n": 32,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.3",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Glob-scoped rules apply conventions by file type wherever files live, and load only when needed. The root file loads everywhere, a skill relies on memory, and user-level rules aren't shared."
+ },
+ {
+  "n": 33,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.2",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Personal variants with different names avoid affecting teammates. Local edits to a shared file are fragile, and the other two options place personal material in shared files."
+ },
+ {
+  "n": 34,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.5",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "When prose is interpreted inconsistently, concrete input and output examples work best. More prose or repetition keeps the ambiguity, and other projects may use different formats."
+ },
+ {
+  "n": 35,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.2",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "The guide teaches `allowed-tools` for restricting tools during a skill. A fork isolates context rather than capabilities. *Build today: current docs describe `allowed-tools` as pre-approval, so use deny rules or hooks to really block a tool.*"
+ },
+ {
+  "n": 36,
+  "answer": [
+   "B"
+  ],
+  "ts": "3.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Selective `@import` keeps things modular and leaves the choice with the maintainers. The root file loads everything, a generator adds machinery, and user-level files aren't shared."
+ },
+ {
+  "n": 37,
+  "answer": [
+   "A"
+  ],
+  "ts": "3.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "`/memory` shows which memory files are actually loaded. Asking the model isn't reliable, Git shows what's in the repo rather than what's loaded in a session, and reinstalling skips the diagnosis."
+ },
+ {
+  "n": 38,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.5",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Interacting problems should go in a single detailed message, whereas independent ones can go one at a time. New sessions lose the connection, continuing keeps regressing, and disabling tests hides the problem."
+ },
+ {
+  "n": 39,
+  "answer": [
+   "A",
+   "E"
+  ],
+  "ts": "3.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Plan mode suits large-scale changes, several valid approaches and architectural decisions. Well-scoped changes with a clear cause suit direct execution."
+ },
+ {
+  "n": 40,
+  "answer": [
+   "A"
+  ],
+  "ts": "5.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Summarizing before spawning passes what's needed without the noise. Subagents can't read the main session's history, a transcript wastes their context, and staying in the main session worsens the crowding."
+ },
+ {
+  "n": 41,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "The Explore subagent isolates verbose discovery and returns a summary. Skipping exploration isn't safe for a large refactor, rereading uses more context, and a system prompt still occupies context."
+ },
+ {
+  "n": 42,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.2",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Always-applicable standards go in always-loaded memory, and occasional task-specific workflows go in on-demand skills. How often it applies decides this, not its importance or length."
+ },
+ {
+  "n": 43,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.2",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "`context: fork` runs the skill in isolation, returning the result without the verbose working. `argument-hint` prompts for parameters, `allowed-tools` limits tools rather than output, and `CLAUDE.md` would load it all the time."
+ },
+ {
+  "n": 44,
+  "answer": [
+   "D"
+  ],
+  "ts": "5.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "`/compact` reduces context use during extended sessions. `/memory` shows and edits memory files, `--resume` restores the session rather than reducing it, and `context: fork` is skill frontmatter."
+ },
+ {
+  "n": 45,
+  "answer": [
+   "B"
+  ],
+  "ts": "3.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "User-level instructions aren't shared. It's a classic hierarchy issue, fixed by moving the instruction to the project level. The other explanations describe behavior that doesn't exist."
+ },
+ {
+  "n": 46,
+  "answer": [
+   "C"
+  ],
+  "ts": "4.2",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Few-shot examples of varied formats address empty extraction when the information is present. Making them optional hides the miss, a stronger instruction may encourage fabrication, and an identical retry gives no new guidance."
+ },
+ {
+  "n": 47,
+  "answer": [
+   "B"
+  ],
+  "ts": "5.5",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Confidence is useful for routing once it's calibrated with labeled data at field level, and contradictory sources also need people. Uncalibrated scores aren't reliable, random routing wastes scarce capacity, and size doesn't indicate error."
+ },
+ {
+  "n": 48,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.5",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Sample refinement maximizes first-pass success and reduces resubmission costs. Fixing afterward wastes a full run, the largest documents aren't representative, and batches do support this workload."
+ },
+ {
+  "n": 49,
+  "answer": [
+   "D"
+  ],
+  "ts": "4.5",
+  "scenario": "Structured Data Extraction",
+  "level": "M",
+  "why": "`custom_id` correlates results, so you can resubmit only what failed, and with a fix for the cause. Rerunning everything wastes money, unchanged oversized documents fail again, and manual handling isn't needed."
+ },
+ {
+  "n": 50,
+  "answer": [
+   "B"
+  ],
+  "ts": "4.4",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Retry-with-error-feedback includes the document, the failed output and the specific error. The API is stateless, so it needs the content again. Without the error it may repeat the mistake, and general instructions don't say what's wrong."
+ },
+ {
+  "n": 51,
+  "answer": [
+   "D"
+  ],
+  "ts": "4.2",
+  "scenario": "Structured Data Extraction",
+  "level": "M",
+  "why": "A small number of targeted examples showing reasoning lets the model generalize to new cases. Many examples add overhead, clear-cut cases don't teach ambiguity, and removing the reasoning removes what generalizes."
+ },
+ {
+  "n": 52,
+  "answer": [
+   "C"
+  ],
+  "ts": "5.5",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Aggregate accuracy can mask poor performance on specific types or fields, such as a small share of receipts. Validate by segment first. Refusing all automation goes too far, and uncalibrated self-reports aren't evidence."
+ },
+ {
+  "n": 53,
+  "answer": [
+   "C"
+  ],
+  "ts": "4.4",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Retries work for format and structural errors, not for absent information. More attempts and examples can't create what's not there, and relaxing the validator invites fabrication. Provide the agreement, or record the value as missing."
+ },
+ {
+  "n": 54,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.4",
+  "scenario": "Structured Data Extraction",
+  "level": "M",
+  "why": "Capturing both values and a flag surfaces discrepancies for handling. Keeping only one value hides the conflict, and confidence doesn't tell you what's inconsistent."
+ },
+ {
+  "n": 55,
+  "answer": [
+   "D"
+  ],
+  "ts": "4.3",
+  "scenario": "Structured Data Extraction",
+  "level": "M",
+  "why": "Schemas guarantee shape, not meaning. Sums and field placement need validation logic. Adding constraints or forcing the tool doesn't address semantic correctness, and free text would reintroduce syntax errors."
+ },
+ {
+  "n": 56,
+  "answer": [
+   "C",
+   "D"
+  ],
+  "ts": "4.3",
+  "scenario": "Structured Data Extraction",
+  "level": "M",
+  "why": "`\"other\"` plus detail keeps the schema extensible, and `\"unclear\"` gives ambiguity an honest place to go. Free text loses consistency, enum additions never catch up, and required doesn't help."
+ },
+ {
+  "n": 57,
+  "answer": [
+   "B"
+  ],
+  "ts": "4.5",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "A document can wait for one full window, then up to 24 hours of processing, so the window can't exceed 6 hours (30 \u2212 24). Only 4 hours fits, and it also leaves a margin."
+ },
+ {
+  "n": 58,
+  "answer": [
+   "B"
+  ],
+  "ts": "4.3",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "Required fields pressure the model to fabricate a value when the source lacks it. A format check can pass on a fabricated number, an estimate is still invented, and these examples don't show what to do when it's absent."
+ },
+ {
+  "n": 59,
+  "answer": [
+   "B"
+  ],
+  "ts": "5.5",
+  "scenario": "Structured Data Extraction",
+  "level": "M",
+  "why": "Stratified sampling measures errors in high-confidence output and can reveal novel patterns. The other options never look at unreviewed output, or only after harm has occurred."
+ },
+ {
+  "n": 60,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.3",
+  "scenario": "Structured Data Extraction",
+  "level": "H",
+  "why": "`any` guarantees a tool call while letting the model choose the matching schema. `auto` may return text, forcing one tool mislabels other types, and an all-optional union schema loses structure. *Build today: forced modes are rejected on some current models, so check the docs.*"
+ }
+]

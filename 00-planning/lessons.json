@@ -1,0 +1,776 @@
+{
+ "facts": {
+  "lessons": 85,
+  "design_problems": 6,
+  "pages": 2432,
+  "words": 522880,
+  "exam_core_pages": 1056
+ },
+ "lessons": [
+  {
+   "module": "AI01",
+   "n": 1,
+   "title": "What Learning From Data Means",
+   "pages": 22,
+   "tag": "",
+   "words": 4730,
+   "status": "planned"
+  },
+  {
+   "module": "AI01",
+   "n": 2,
+   "title": "Classical ML and How to Measure It",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI01",
+   "n": 3,
+   "title": "Neural Networks and How They Train",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI01",
+   "n": 4,
+   "title": "From Word Counts to Word Vectors",
+   "pages": 22,
+   "tag": "",
+   "words": 4730,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 1,
+   "title": "Tokens and Tokenization",
+   "pages": 20,
+   "tag": "",
+   "words": 4300,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 2,
+   "title": "Attention From First Principles",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 3,
+   "title": "The Transformer End to End",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 4,
+   "title": "How an LLM Is Trained: RLHF and Constitutional AI",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 5,
+   "title": "Inference and Model Serving Internals",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 6,
+   "title": "Why LLMs Fail: Hallucination, Position and Interpretability",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI02",
+   "n": 7,
+   "title": "Generative AI Beyond Text and Choosing a Model",
+   "pages": 20,
+   "tag": "",
+   "words": 4300,
+   "status": "planned"
+  },
+  {
+   "module": "AI03",
+   "n": 1,
+   "title": "The Messages API: Stateless by Design",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI03",
+   "n": 2,
+   "title": "Prompt Engineering That Survives Production",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI03",
+   "n": 3,
+   "title": "Structured Output and Validation Loops",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI03",
+   "n": 4,
+   "title": "Thinking, Effort and Model Selection",
+   "pages": 20,
+   "tag": "",
+   "words": 4300,
+   "status": "planned"
+  },
+  {
+   "module": "AI03",
+   "n": 5,
+   "title": "Prompt Caching and Batches: The Economics",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI03",
+   "n": 6,
+   "title": "Context Engineering",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI04",
+   "n": 1,
+   "title": "Choosing and Operating Embedding Models",
+   "pages": 22,
+   "tag": "",
+   "words": 4730,
+   "status": "planned"
+  },
+  {
+   "module": "AI04",
+   "n": 2,
+   "title": "ANN Indexes in Production: Filtering and Quantization",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI04",
+   "n": 3,
+   "title": "Hybrid Search and Reranking",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI04",
+   "n": 4,
+   "title": "Choosing a Vector Store: pgvector to Dedicated Engines",
+   "pages": 22,
+   "tag": "",
+   "words": 4730,
+   "status": "planned"
+  },
+  {
+   "module": "AI04",
+   "n": 5,
+   "title": "Design a Multi-Tenant Vector Search Platform",
+   "pages": 40,
+   "tag": "DP",
+   "words": 8600,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 1,
+   "title": "Why RAG Exists and When Not to Use It",
+   "pages": 22,
+   "tag": "",
+   "words": 4730,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 2,
+   "title": "Ingestion and Chunking",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 3,
+   "title": "Contextual Retrieval",
+   "pages": 20,
+   "tag": "PILOT",
+   "words": 4300,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 4,
+   "title": "Query Understanding, Context Assembly and Citations",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 5,
+   "title": "The RAG Family: Graph, SQL, Agentic, Multimodal, Self-RAG",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 6,
+   "title": "Evaluating RAG",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI05",
+   "n": 7,
+   "title": "Design an Enterprise Knowledge Assistant",
+   "pages": 42,
+   "tag": "DP",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 1,
+   "title": "Workflows or Agents: Building Effective Agents",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 2,
+   "title": "The Agentic Loop",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 3,
+   "title": "Designing Tools an Agent Can Use",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 4,
+   "title": "MCP: Architecture and Primitives",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 5,
+   "title": "MCP: Integration, Servers and Errors",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 6,
+   "title": "Multi-Agent Orchestration: Anthropic's Research System",
+   "pages": 32,
+   "tag": "",
+   "words": 6880,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 7,
+   "title": "Sessions, Memory and Long-Running Harnesses",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 8,
+   "title": "Hooks, Enforcement, Escalation and Humans in the Loop",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 9,
+   "title": "Design a Customer Support Resolution Agent",
+   "pages": 42,
+   "tag": "DP",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI06",
+   "n": 10,
+   "title": "Design a Multi-Agent Research System",
+   "pages": 42,
+   "tag": "DP",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI07",
+   "n": 1,
+   "title": "Do You Need a Framework? SDK to Managed Agents",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI07",
+   "n": 2,
+   "title": "LangChain and LangGraph",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI07",
+   "n": 3,
+   "title": "LlamaIndex and Other Frameworks",
+   "pages": 20,
+   "tag": "",
+   "words": 4300,
+   "status": "planned"
+  },
+  {
+   "module": "AI07",
+   "n": 4,
+   "title": "Spring AI and LangChain4j",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 1,
+   "title": "Claude in Spring Boot: Client, Config, Errors",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 2,
+   "title": "Streaming to Users: SSE and Virtual Threads",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 3,
+   "title": "A Production Agent Loop and Tools in Java",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 4,
+   "title": "Building an MCP Server in Java",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 5,
+   "title": "A RAG Service With pgvector",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 6,
+   "title": "Async AI: Kafka, Batches and Workflows",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 7,
+   "title": "Testing AI Code",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI08",
+   "n": 8,
+   "title": "Design a Banking Transaction Analysis Assistant",
+   "pages": 40,
+   "tag": "DP",
+   "words": 8600,
+   "status": "planned"
+  },
+  {
+   "module": "AI09",
+   "n": 1,
+   "title": "Threat Modelling an AI System",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI09",
+   "n": 2,
+   "title": "Prompt Injection: The Problem That Has No Patch",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI09",
+   "n": 3,
+   "title": "Securing Tools, MCP and Sandboxes",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI09",
+   "n": 4,
+   "title": "PII, Tenancy, RBAC, Secrets and Audit",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI09",
+   "n": 5,
+   "title": "Jailbreaks, Guardrails and Responsible AI",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 1,
+   "title": "Reliability: Retries, Rate Limits and Fallbacks",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 2,
+   "title": "AI Gateways and Model Routing",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 3,
+   "title": "Evals: Datasets, Hallucination and CI Gates",
+   "pages": 30,
+   "tag": "",
+   "words": 6450,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 4,
+   "title": "Observability: Traces, Tokens and Cost",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 5,
+   "title": "Cost Engineering and Semantic Caching",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 6,
+   "title": "Deployment, Multi-Tenancy and Disaster Recovery",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI10",
+   "n": 7,
+   "title": "Design an LLM Gateway",
+   "pages": 42,
+   "tag": "DP",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI11",
+   "n": 1,
+   "title": "Fine-Tuning, LoRA and When Not to Bother",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI11",
+   "n": 2,
+   "title": "Self-Hosting Open Models and Quantization",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI11",
+   "n": 3,
+   "title": "Interpretability and Alignment Research",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI11",
+   "n": 4,
+   "title": "Autonomy: Code Execution and Computer Use",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI11",
+   "n": 5,
+   "title": "Event-Driven AI, Workflow Engines and Sagas",
+   "pages": 26,
+   "tag": "",
+   "words": 5590,
+   "status": "planned"
+  },
+  {
+   "module": "AI12",
+   "n": 1,
+   "title": "How Claude Code Works and Its Built-In Tools",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI12",
+   "n": 2,
+   "title": "CLAUDE.md, Rules and Memory",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI12",
+   "n": 3,
+   "title": "Commands, Skills, Subagents and Hooks",
+   "pages": 28,
+   "tag": "",
+   "words": 6020,
+   "status": "planned"
+  },
+  {
+   "module": "AI12",
+   "n": 4,
+   "title": "Plan Mode and Iterative Refinement",
+   "pages": 22,
+   "tag": "",
+   "words": 4730,
+   "status": "planned"
+  },
+  {
+   "module": "AI12",
+   "n": 5,
+   "title": "Claude Code in CI/CD",
+   "pages": 24,
+   "tag": "",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 1,
+   "title": "The Exam Decoded: How Scenario Questions Are Built",
+   "pages": 24,
+   "tag": "NEW-CERT",
+   "words": 5160,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 2,
+   "title": "Domain 1 Review and Question Bank",
+   "pages": 58,
+   "tag": "NEW-CERT",
+   "words": 12470,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 3,
+   "title": "Domain 2 Review and Question Bank",
+   "pages": 42,
+   "tag": "NEW-CERT",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 4,
+   "title": "Domain 3 Review and Question Bank",
+   "pages": 46,
+   "tag": "NEW-CERT",
+   "words": 9890,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 5,
+   "title": "Domain 4 Review and Question Bank",
+   "pages": 46,
+   "tag": "NEW-CERT",
+   "words": 9890,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 6,
+   "title": "Domain 5 Review and Question Bank",
+   "pages": 36,
+   "tag": "NEW-CERT",
+   "words": 7740,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 7,
+   "title": "The Six Scenarios Walked Through",
+   "pages": 36,
+   "tag": "NEW-CERT",
+   "words": 7740,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 8,
+   "title": "Question Types Lab: All 18 Formats",
+   "pages": 36,
+   "tag": "NEW-CERT",
+   "words": 7740,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 9,
+   "title": "Mock Exam 1",
+   "pages": 42,
+   "tag": "NEW-CERT",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 10,
+   "title": "Mock Exam 2",
+   "pages": 42,
+   "tag": "NEW-CERT",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 11,
+   "title": "Mock Exam 3",
+   "pages": 42,
+   "tag": "NEW-CERT",
+   "words": 9030,
+   "status": "planned"
+  },
+  {
+   "module": "AI13",
+   "n": 12,
+   "title": "Final Revision Handbook and Readiness Check",
+   "pages": 24,
+   "tag": "NEW-CERT",
+   "words": 5160,
+   "status": "planned"
+  }
+ ]
+}

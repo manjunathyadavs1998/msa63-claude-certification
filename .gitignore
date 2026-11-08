@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------
+# Build tooling
+# ---------------------------------------------------------------
+# No trailing slash: here node_modules is a symlink, which "node_modules/" wouldn't match.
+node_modules
+package-lock.json
+*.html
+__pycache__/
+*.pyc
+
+# Java build output
+code/**/target/
+*.class
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local Claude Code settings
+.claude/settings.local.json
+CLAUDE.local.md
+
+# ---------------------------------------------------------------
+# Third-party material: link to it rather than redistributing it
+# ---------------------------------------------------------------
+# Anthropic's exam guide, here and in the pack. Download it from the official certification page.
+01-source-map/*.pdf
+# Auto-generated captions of third-party videos
+01-source-map/transcripts/
+
+# ---------------------------------------------------------------
+# Personal study records
+# ---------------------------------------------------------------
+Idea.md
+00-planning/PRACTICE_PROGRESS.md
+02-modules/13-certification/exam-simulations/my-attempts/
+02-modules/13-certification/revision/
+05-pdf-output/revision/
+scripts/build_revision.py
+scripts/build_revision_pdf.py
+
+# ---------------------------------------------------------------
+# Generated or superseded files
+# ---------------------------------------------------------------
+# Rendered page images. The validation reports are kept.
+07-validation/*
+!07-validation/reports/
+# First-pass archive, replaced by the current plan
+00-planning/archive/
+# Every module PDF is already in the certification pack
+05-pdf-output/modules/
+05-pdf-output/prototype/
+05-pdf-output/extras/
+# Merged copy of the pack's own PDFs
+05-pdf-output/certification-pack/CCAR-F-Required-Reading-All.pdf
+05-pdf-output/certification-pack/00-Start-Here/00-CCAR-F-Exam-Guide-v1.0.pdf

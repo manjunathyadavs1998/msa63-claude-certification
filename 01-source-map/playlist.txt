@@ -1,0 +1,27 @@
+WARNING: Your yt-dlp version (2026.06.09) is older than 90 days!
+         It is strongly recommended to always use the latest version.
+         You installed yt-dlp with pip or using the wheel from PyPi; Use that to update.
+         To suppress this warning, add --no-update to your command/config.
+01|rcpNFm_poQs|544.0|The AI Certification That Will Make You Irreplaceable | Claude Certified Architect - Full Breakdown
+02|ldqOnljDINc|2967.0|Claude Certified Architect: Full Course Ep 01: Agentic Loops & stop_reason Explained
+03|ejPWvBcc_DU|1956.0|Multi-Agent Systems & Coordinator Patterns Explained | Claude Certified Architect Ep 02
+04|a2N6vKdQUfE|2016.0|Claude Certified Architect Ep 03 | Subagent Context Passing & Session Management | Full Course
+05|e7ijjK173zI|768.0|Claude Certified Architect Ep 04 | Multi-Agent System in Python & Claude SDK | Hands On
+06|JJBcpwpsKzk|2723.0|Claude Certified Architect: Full Course Ep 05 — PreToolUse, PostToolUse Hooks & Task Decomposition
+07|s1j1vTnCKns|1490.0|Claude Certified Architect: Full Course Ep 06: Tool Descriptions & Tool Misrouting Explained
+08|eZj6FtTVV58|2286.0|Claude Certified Architect Ep 07: Agent Error Handling & tool_choice Explained
+09|IVUxGTxSuH8|5349.0|Claude Certified Architect: Full Course Ep 08 | MCP Servers, Config, Cline & More
+10|eh-xxQpfBBY|2139.0|Claude Certified Architect: Ep 09 | Claude Built-in Tools Explained | Full Course Series
+11|qIee1aqSAwY|1897.0|Claude Certified Architect: Ep 10 | CLAUDE.md Hierarchy & Config Rules | Full Course Series
+12|v3tMqTmgg2Q|1997.0|Claude Certified Architect: Ep 11 | Custom Slash Commands & Skills | Full Course Series
+13|q-n1cut5e7c|3102.0|Claude Certified Architect: Ep 12 | Plan Mode vs Execute | Claude Code | Full Course Series
+14|GWCnDhgH840|1882.0|Claude Certified Architect: Ep 13 | Claude Code CI/CD Pipelines | Full Course Series
+15|HqwULqy1egw|2066.0|Claude Certified Architect: Ep 14 | Prompt Engineering — Explicit Criteria & False Positives
+16|FbIcU6YFrhw|1662.0|Claude Certified Architect: Ep 15 | Few-Shot Prompting Explained | Full Course Series
+17|CaDaLn7DcQ0|2211.0|Claude Certified Architect: Ep 16 | Structured Output & JSON Schema
+18|BXs7QoLQxX0|2045.0|Claude Certified Architect: Ep 17 | Batch API & Multi-Pass Review | Full Course Series
+19|7kaJdZ7veDs|2598.0|Claude Certified Architect: Ep 18 | Why AI Agents Forget - Context Engineering | Full Course Series
+20|MqnElZw6NYk|2546.0|Claude Certified Architect: Ep 19 | Subagent Error Propagation & Context Management | Full Course
+21|tsIxzFg76Nw|3078.0|Claude Certified Architect: Ep 20 | When AI Needs a Human | Full Course Series
+22|-NymqBcFy6E|3650.0|Claude Certified Architect: Exam Questions Solved | Exam Traps | Bonus Episode
+23|BcFZckORlWM|1495.0|Claude Certified Architect vs Developer: What Nobody Tells You (2026 Update)

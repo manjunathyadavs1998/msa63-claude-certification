@@ -1,0 +1,810 @@
+@4.1|S5|E
+Which review instruction best improves precision?
++ "Flag comments only when the claimed behavior contradicts the code"
+- "Be conservative, and report only the findings you're really sure about"
+- "Check that all of the comments in this code are accurate and helpful"
+- "Do a thorough and careful review, and take as much time as you need"
+= Explicit criteria beat general caution. "Be conservative" and "be thorough" don't define what counts.
+
+@4.1|S5|M
+A team adds "only report high-confidence findings" to its review prompt, and precision barely changes. Why?
++ General confidence instructions don't define which issues should count
+- The model can't produce any output when it's unsure about a finding
+- The phrase has to appear in the tool description to have any effect at all
+- The instruction is overridden by the JSON schema that's on the output
+= Specific categorical criteria improve precision where general instructions don't. The others are false.
+
+@4.1|S5|M
+One review category, style nits, has a high false-positive rate, and developers now ignore all findings. What's a good immediate step?
++ Temporarily disable that category, while you improve its prompt
+- Lower the severity of all findings by one level across the board
+- Require developers to respond to all of the comments that get posted
+- Add a reminder at the top of each comment, saying that it may be wrong
+= High false-positive categories undermine trust in the accurate ones. Disabling restores trust while you improve. The others keep the noise.
+
+@4.1|S5|M
+Why do false positives matter beyond their own count?
++ They undermine developers' trust in the accurate findings as well
+- They increase the token count of the review, which then gets truncated
+- They trigger the API's safety system, and that blocks later reviews
+- They reduce the model's accuracy on later runs, since it learns from them
+= Trust erosion is the stated risk. The model doesn't learn across runs.
+
+@4.1|S5|M
+Reviewers disagree on what "high severity" means, and the model is inconsistent. What's the best fix?
++ Define each severity level explicitly, with concrete code examples
+- Ask the model to use its own best judgment on severity for each one
+- Remove severity from the output, so that there's no longer any disagreement
+- Have the model report a numeric confidence, and use that as the severity
+= Explicit criteria with examples produce consistency. The others avoid the problem, or substitute an unreliable signal.
+
+@4.1|S5|E
+Which is a good way to define review scope?
++ List what to report (bugs, security) and what to skip (minor style, local patterns)
+- Ask for only those issues that a senior engineer would find important enough to fix
+- Report anything that might be a problem, and let the developers filter findings later
+- Mention that the team really dislikes noisy reviews, and hope that it adjusts
+= Explicit report and skip lists are concrete. "Senior engineer" and "noisy" are undefined, and reporting everything pushes the work onto developers.
+
+@4.1|S5|H
+A prompt says, "Flag security problems." Results include many theoretical ones. Which revision is best?
++ "Flag only injection, auth bypass and secret exposure; skip theoretical hardening."
+- "Flag security problems, but be really careful, and don't bother anyone with anything minor at all."
+- "Flag security problems with a confidence above 90%, and leave the others out of the final report."
+- "Flag all security problems, and rank them with the most serious ones at the top of your output."
+= It defines categories and exclusions. Confidence filtering and "be careful" aren't criteria, and ranking keeps the noise.
+
+@4.1|S5|H
+You want to see whether a prompt's criteria improved a review. What's the best evidence?
++ False-positive rate by category, on labelled examples, before and after
+- The model's own statement that it's more accurate with the new prompt
+- The total number of findings, since fewer findings must mean more accuracy
+- Whether developers say at the next meeting that it seems somewhat better
+= Measure by category on labelled data. Fewer findings can mean missed bugs.
+
+@4.1|S6|M
+An extraction prompt says "extract the important dates," and results vary. What helps most?
++ Name exactly which dates: invoice date, due date, service period start and end
+- Tell the model that the dates are very important to the company's accounting
+- Ask for all the dates that might be important, then have a script remove some
+- Increase the output limit, so that more of the document's dates can be included
+= Naming the specific dates removes the ambiguity. Saying they're important doesn't define them, and over-extracting or raising limits leaves the decision open.
+
+@4.1|S5|M
+Which prompt pattern is a known failure for reducing false positives?
++ "Only flag issues if you're confident"
+- "Report null dereferences on reachable paths"
+- "Skip naming preferences unless they cause bugs"
+- "Severity High means data loss, as shown below"
+= "Only flag if confident" gives no categories, so it barely improves precision. The other three are specific criteria, and they're what the guide recommends.
+
+@4.1|S5|H
+Your review finds real bugs, but it also flags a local pattern the team has adopted deliberately. What's the best approach?
++ Add the pattern to explicit skip criteria, with an example of acceptable code
+- Ask the model to respect the team's patterns in general, wherever they appear
+- Require a higher confidence score on all findings that mention this pattern
+- Disable the entire review category that the pattern happens to fall within
+= Name the exception. General statements don't define it, and disabling loses real findings.
+
+@4.1|S2|M
+"Make this code better" gives uneven results. Which change helps most?
++ State goals, such as "remove duplicated parsing, and keep the public API"
+- Add "please take your time, and be very thorough about everything you do here"
+- Ask for several versions of the improved code, and choose whichever looks the best
+- Repeat the phrase "make it better" at both the start and end of the request
+= Stated goals tell Claude what "better" means. "Be thorough", repeating the phrase, or generating several versions leaves the criteria undefined.
+
+@4.1|S5|H
+A team proposes removing false positives by showing only findings where the model's confidence exceeds 0.9. What's the concern?
++ Self-reported confidence isn't a reliable filter, so write explicit criteria first
+- Confidence scores aren't available in structured output, so the plan can't be implemented
+- A threshold of 0.9 is too low, and it would need to be set to at least 0.99
+- Filtering after generation is prohibited, as all findings must reach the developer
+= The guide warns against confidence-based filtering in place of criteria. Calibrated confidence can route review (TS 4.6, 5.5), yet it isn't a substitute.
+
+@4.1|S5|E
+What's the main effect of vague instructions on review output?
++ Inconsistent findings, with lower precision
+- A shorter output, with higher precision
+- A schema error on the structured output
+- A rejection of the request by the API
+= With no defined criteria, findings vary and precision falls. Vague wording doesn't cause schema errors or API rejections, and it doesn't raise precision.
+
+@4.1|S5|H
+Select the two instructions that are specific criteria.
++ "Report SQL built by string concatenation from user input"
++ "Skip whitespace and import-order issues"
+- "Only report what you're confident about"
+- "Be conservative in what you flag"
+- "Prioritize quality over quantity"
+= They name exact categories to report and skip. "Confident", "conservative" and "quality over quantity" leave the decision undefined.
+
+@4.1|S5|H
+Select the two steps that restore developer trust in a noisy reviewer.
++ Temporarily disable the high false-positive categories
++ Rewrite those categories with explicit, example-based criteria
+- Post every finding, in order to prove thoroughness
+- Add "be accurate" to the top of the system prompt
+- Hide the reviewer's comments behind a collapsed section
+= Disable, improve, then re-enable. The others keep or hide the noise.
+
+@4.1|S5|M
+Which is the best report/skip criterion for comment accuracy?
++ Report when a comment states behavior the code doesn't have; skip outdated wording that doesn't mislead
+- Report any comment that could conceivably be misunderstood by someone reading it at some later time
+- Report all comments, since comments are generally less reliable than code and should be reviewed
+- Skip comments altogether, as they aren't executed, and so they can't cause any real bugs at all
+= It defines what to report and what to skip, in terms of behavior. "Could be misunderstood" flags nearly everything, reviewing all comments isn't a criterion, and comments can mislead.
+
+@4.2|S5|E
+Detailed instructions still give inconsistent output formats. What does the guide name as most effective?
++ Few-shot examples
+- Stronger capitalized rules
+- More output tokens per call
+- A longer list of don'ts
+= Few-shot examples achieve consistently formatted, actionable output.
+
+@4.2|S1|M
+How many targeted few-shot examples does the guide recommend for ambiguous scenarios?
++ 2–4
+- 1 at most
+- 20–30
+- As many as fit
+= The guide says 2–4 targeted examples, showing reasoning on ambiguous cases. One is rarely enough, and dozens cost context without improving coverage of hard cases.
+
+@4.2|S1|M
+What should a few-shot example for an ambiguous tool choice show?
++ The reasoning for why one action was chosen over plausible alternatives
+- Only the final tool name, so that the example stays as short as it can be
+- A customer's full transcript, including all of the irrelevant small talk
+- Every tool in the system, each one used once, for the sake of balance
+= Showing reasoning enables generalization. The others don't teach the judgment.
+
+@4.2|S5|M
+Your review comments vary in structure. Which example content fixes this?
++ Examples that show location, issue, severity and suggested fix in the required format
+- Examples of well-known bugs from famous open-source projects, without any format
+- Examples of the team's coding style guide, pasted as one very long paragraph
+- A single example that contains all the kinds of bug that have ever been found
+= Examples in the required format show exactly what to produce. Famous bugs with no format, a pasted style guide, or one overloaded example don't demonstrate the structure.
+
+@4.2|S5|M
+Reviewers flag safe patterns as issues. Which few-shot approach helps?
++ Examples distinguishing acceptable code from genuine issues, for similar-looking cases
+- Only examples of real bugs, so that the model has plenty of positive cases
+- Only examples of acceptable code, so that it reports far fewer issues overall
+- Examples that show high-confidence findings, with no mention of why they count
+= Contrasting examples reduce false positives while allowing generalization.
+
+@4.2|S6|M
+An extractor returns null for required fields when documents are formatted unusually. What's a good fix?
++ Add few-shot examples that show correct extraction from those varied formats
+- Make the fields required in the schema, so that a value has to be returned
+- Lower the retry count, so that fewer extra calls are spent on these documents
+- Ask the model in general terms to try harder at finding the missing values
+= Examples of varied structures address empty extractions. Making them required invites fabrication.
+
+@4.2|S6|H
+Documents cite sources either inline or in a bibliography, and extraction misses one form. What's the best prompt change?
++ Add examples showing correct handling of both inline citations and bibliographies
+- Add a rule stating that citations are always in the bibliography, for consistency
+- Add an instruction that tells the model citations are important to the company
+- Remove citation fields from the schema, as those documents are too inconsistent
+= Few-shot examples handle varied structures. A false rule breaks the other form.
+
+@4.2|S6|H
+How can few-shot examples reduce hallucination in extraction?
++ They show how to handle informal or missing values, rather than inventing them
+- They remove the need for any schema, since the examples define the format
+- They make the model refuse any document containing informal measurements
+- They guarantee correct values because the model copies the example's numbers
+= Examples teach handling, such as informal measurements and nulls. They don't guarantee correctness, and copied values would be a failure.
+
+@4.2|S1|M
+Why do few-shot examples help with new situations that aren't in the examples?
++ They demonstrate judgment that the model can generalize to novel patterns
+- They add the examples to the model's training data for later sessions
+- They force the model to match every new input to its nearest example
+- They only help with cases identical to the examples that were provided
+= Generalization is the benefit. They don't retrain anything, or force matching.
+
+@4.2|S1|H
+An agent's escalations are inconsistent for refund-policy edge cases. Which addition is most effective?
++ A few examples of borderline cases: resolve or escalate, and why
+- A long list of all the policy text that's been written in the last five years
+- A rule saying that the agent should escalate whenever it's unsure about something
+- A sentiment threshold, above which the agent should automatically escalate a case
+= Targeted examples calibrate judgment (TS 5.2). Unsure-based and sentiment-based rules are unreliable.
+
+@4.2|S5|H
+Tests suggested by Claude miss branch-level gaps. Which few-shot example helps?
++ One showing a covered line whose false branch is untested, and the test that closes it
+- One showing a very long test file from the project with no explanation at all
+- One showing a function, along with the statement "write good tests for this"
+- One showing the coverage percentage for the project in the last quarterly report
+= Few-shot examples can demonstrate branch-level coverage reasoning.
+
+@4.2|S6|M
+You have 15 examples, and they're all clear-cut invoices. Accuracy on odd invoices hasn't changed. Why?
++ Examples help most on ambiguous cases, and yours don't show them
+- 15 is over the API's limit, so the model has silently dropped them
+- Examples only ever affect format, and they can't affect accuracy at all
+- Invoices are the one document type that few-shot examples don't work on
+= Target ambiguous cases. More easy cases add little.
+
+@4.2|S2|E
+Which technique is best for showing a required output format?
++ An example of that output
+- A paragraph on its importance
+- A bigger iteration limit
+- A second model reviewing it
+= An example shows the format exactly, which prose often doesn't. A paragraph on importance adds no format detail, and an iteration limit or a second reviewing model doesn't teach the format either.
+
+@4.2|S5|M
+Which is the best example of a false-positive-reducing few-shot?
++ Input: retry loop with a capped sleep. Output: no issue, because the cap prevents a hot loop
+- Input: any code at all. Output: looks fine to me, no need for any further review of it
+- Input: a security bug. Output: this is very bad, and you should really fix it right away
+- Input: long file. Output: a list of all the variable names that appear within the file
+= It shows acceptable code and explains why it's fine, which the model can generalize. "Looks fine" has no reasoning, a bug example doesn't reduce false alarms, and a variable list is irrelevant.
+
+@4.2|S1|H
+Your few-shot examples mention `get_customer` first in all cases. The agent now calls it even when it isn't needed. What's the fix?
++ Vary the examples to include cases where another tool is right, with the reasons
+- Remove the tool's description, as the examples are now defining its use
+- Add more examples with the same pattern, in order to reinforce them further
+- Add a rule at the end of the prompt, saying to ignore the examples sometimes
+= Biased examples teach the wrong pattern. Include the distinctions.
+
+@4.2|S6|H
+Select the two uses of few-shot examples named in the guide for extraction.
++ Handling varied document structures
++ Addressing empty or null extraction of required fields
+- Guaranteeing that the JSON syntax is valid
+- Replacing the need for validation altogether
+- Reducing the size of the input document
+= Those are named. Schemas handle syntax, and validation remains necessary.
+
+@4.2|S1|H
+Select the two properties of a good few-shot example for ambiguous requests.
++ It targets a case the model gets wrong
++ It explains why one option was chosen
+- It's as long as the longest real transcript
+- It repeats a case that's already handled well
+- It contains no reasoning, in order to save tokens
+= Target the cases it gets wrong, and show why one choice beats another. Long transcripts, already-solved cases and bare answers teach little.
+
+@4.3|S6|E
+What does the guide describe as the most reliable way to get schema-compliant structured output?
++ Tool use with a JSON schema
+- A prompt saying "reply in JSON"
+- A regex over the text response
+- A few-shot example by itself
+= It eliminates JSON syntax errors. *Build today: `output_config.format` also exists. The exam guide's answer is tool use.*
+
+@4.3|S6|M
+You use strict schemas through tool use. Which errors remain possible?
++ Semantic errors, such as line items not summing to the total
+- JSON syntax errors, such as unbalanced brackets or stray commas
+- Missing required keys defined in the tool's input schema
+- Values having a type other than what the schema has declared
+= Schemas remove syntax errors, and not meaning errors. So you still validate semantics.
+
+@4.3|S6|M
+With `tool_choice: "auto"`, what could happen on an extraction request?
++ The model may return text and not call the tool
+- The API automatically writes the JSON for the model
+- The tool is called twice, for the sake of redundancy
+- The request fails unless the document contains JSON
+= `auto` leaves it optional, so use `any` or forced selection to guarantee it (per the guide).
+
+@4.3|S6|M
+A source document may not state a PO number, and the required field gets fabricated values. What's the schema fix?
++ Make the field optional or nullable
+- Keep it required, and add a pattern
+- Remove it, and all other optional data
+- Add "never fabricate" to a tool's name
+= Required fields pressure the model to invent. Nullable fields allow honest absence.
+
+@4.3|S6|M
+Categories are mostly known, though new ones appear. What's the best design?
++ An enum with an "other" value, plus a detail string
+- A free-text string, with no constraints of any kind on it
+- An enum of today's values, and reject all other documents
+- A required boolean for each category that's ever appeared
+= An enum keeps most values clean, while "other" plus a detail captures new ones. Free text loses structure, rejecting documents loses data, and a boolean per category doesn't scale.
+
+@4.3|S6|M
+Some source documents are unclear on a classification. What's the best schema addition?
++ An "unclear" enum value
+- A required confidence of 100
+- A retry until it's decided
+- A longer field description
+= It gives an honest option for ambiguity, rather than a forced guess.
+
+@4.3|S6|H
+The document type's unknown, and you have one extraction tool for each type. What's the right `tool_choice`?
++ `"any"`
+- `"auto"`
+- `"none"`
+- A forced tool
+= `any` guarantees structure and lets the model pick. *Build today: `any` returns 400 on Opus 5.5 and Sonnet 5.5. Use `auto` with strict tools and an instruction.*
+
+@4.3|S6|H
+`extract_metadata` has to run before enrichment. Which configuration ensures that?
++ `tool_choice: {"type": "tool", "name": "extract_metadata"}` on the first request
+- `tool_choice: "any"` on the first request, listing `extract_metadata` first
+- `tool_choice: "auto"`, with a strong statement of the required order in the prompt
+- `tool_choice: "none"`, followed by a parse of the model's description of its plan
+= Forced selection names the tool. `any` doesn't guarantee which one. *Build today: forced selection is rejected on some current models.*
+
+@4.3|S6|M
+Where do you read the structured result from when using tool use for extraction?
++ The `tool_use` block's input
+- The final text block's content
+- The `stop_reason` of the response
+- The response's HTTP headers
+= The model's arguments are the structured data. You don't need to run anything to get them.
+
+@4.3|S6|H
+Dates arrive as "3/4/26", "March 4", and "2026-03-04". A strict schema still produces inconsistent values. What's the fix?
++ Add format normalization rules to the prompt, alongside the schema
+- Change the type to `integer`, so that dates are stored as numbers
+- Make the date field required, so that the model will take more care
+- Use `tool_choice: "any"`, as this normalizes field formats automatically
+= Schemas enforce shape, and normalization rules guide values. The guide pairs them.
+
+@4.3|S6|E
+A tool's JSON schema is passed as what?
++ The tool's input parameters definition
+- A file attachment to the model request
+- A separate call to a validation endpoint
+- The `stop_reason` value on the response
+= Extraction tools define the schema as their input.
+
+@4.3|S6|H
+Line items don't sum to the stated total in some outputs. Can a stricter schema alone fix it?
++ No: that's semantic, so add validation that compares calculated and stated totals
+- Yes: adding `required` to all of the fields makes sums come out correctly
+- Yes: changing number fields to strings removes all of the arithmetic issues
+- No: nothing can fix this, so remove totals from the output altogether
+= Schemas can't check meaning. Validate in code (TS 4.4).
+
+@4.3|S6|M
+A field accepts a value in `currency`, and the model sometimes puts a number there. What does strict schema use guarantee?
++ That its type and shape conform, and not that the value is right
+- That its value is correct for that document in all cases
+- That nothing is ever placed in the wrong field by the model
+- That the model will have read the whole document first
+= Values in wrong fields are semantic errors, which schemas don't prevent.
+
+@4.3|S4|M
+You need a tool call instead of a chatty reply, though any of three tools is fine. Which option does the guide name?
++ `tool_choice: "any"`
+- `tool_choice: "auto"`
+- `stop_reason: "tool_use"`
+- `max_tokens: 1`
+= `any` requires a tool. `stop_reason` is an output, not a setting.
+
+@4.3|S6|H
+A "conflict_detected" boolean is added to a schema. What's its purpose?
++ It flags inconsistent source data, so downstream handling can route it
+- It makes the model resolve conflicts by picking the most recent value
+- It validates the JSON syntax of the other fields in the output
+- It tells the API to retry when the model isn't able to decide
+= It surfaces a disagreement so that code or people can handle it (TS 4.4, 5.5). It doesn't resolve conflicts, validate syntax, or trigger API retries.
+
+@4.3|S6|M
+Which schema choice best prevents fabricated values?
++ Nullable fields for information that may be absent
+- Required fields, each with a clear description
+- A rule in the prompt saying that values must be real
+- Replacing all string fields by numeric identifiers
+= A nullable field lets the model say a value is absent. Required fields pressure it to invent one, and a prompt rule alone is weaker, while numeric IDs don't address it.
+
+@4.3|S6|H
+Which is the best description of an "other" + detail pattern?
++ `category` enum includes "other", and `category_detail` carries the specifics when it's chosen
+- `category` is free text, and `other` is a list of all values that aren't currently in use
+- `category` enum rejects anything unknown, while `detail` holds an error message for the retry
+- `other` is a required boolean, while `detail` holds the model's confidence in the category
+= It keeps the enum while capturing new values in a detail field. Free text loses the enum, rejecting unknowns loses data, and a boolean with a confidence doesn't record the category.
+
+@4.3|S5|M
+CI needs structured findings from Claude Code. What's the CLI equivalent of schema-enforced output?
++ `--output-format json` with `--json-schema`
+- `--tool-choice any` with `--strict`
+- `--print-json` with `--enforce`
+- `--batch` with `--output json`
+= Those are the guide's flags (TS 3.6). The others aren't.
+
+@4.3|S6|H
+Select the two correct statements about a strict JSON schema used through tool use.
++ Eliminated: unbalanced JSON brackets
++ Not eliminated: a total that doesn't equal its line items
+- Eliminated: a date that's in the wrong field
+- Eliminated: a value that the document doesn't contain
+- Not eliminated: JSON syntax errors in tool input
+= Schema-enforced tool input removes syntax errors, while a wrong total is a semantic error that it can't detect. Wrong-field and invented values are semantic as well, so they aren't eliminated.
+
+@4.3|S6|H
+Select the two schema designs that reduce hallucination.
++ Nullable fields for possibly absent data
++ An "unclear" value for ambiguous data
+- Required fields on all possible attributes
+- A rule that empty values are never allowed
+- A single required free-text "notes" field
+= Both give the model honest alternatives to inventing.
+
+@4.4|S6|E
+What should a retry include to help the model correct itself?
++ The original document, the failed extraction, and the specific validation errors
+- Only the words "that was wrong, so please try once more" and nothing else
+- Only the schema again, with stronger instructions regarding its importance
+- A different document, so that the model isn't influenced by what it did before
+= It needs the document to re-check, its failed answer, and the specific errors. A bare "try again" gives no direction, the schema alone doesn't show the error, and another document is irrelevant.
+
+@4.4|S6|M
+Extraction fails because the total appears only in an attachment that wasn't provided. Will retries help?
++ No: the information is absent, so retries can't succeed
+- Yes: with enough retries, the model will eventually find it
+- Yes, as long as the prompt makes the requirement more emphatic
+- Only if `tool_choice` changes to forced selection on the retry
+= Retries fix format and structure, and they don't create missing data. Fetch the attachment, or return null.
+
+@4.4|S6|M
+Which failure is most likely fixable by retrying with error feedback?
++ A date returned as "March 4" when the format must be ISO 8601
+- A contract end date that isn't stated anywhere in the document
+- A customer ID that exists only in a separate system of record
+- A signature that's on a page that wasn't included in the upload
+= Format errors are correctable. The others are absent information.
+
+@4.4|S6|M
+Which is a semantic validation error?
++ Values don't sum to the stated total
+- A trailing comma in the JSON output
+- An unclosed bracket in the JSON output
+- A property name in the wrong quotes
+= The others are syntax errors, which tool use eliminates.
+
+@4.4|S6|M
+Why extract both `calculated_total` and `stated_total`?
++ To flag discrepancies between what's stated and what the items add up to
+- To increase the chance that one of the two values is accepted by the schema
+- To let the model choose whichever of the two it feels is the more accurate
+- To avoid validating the totals in code, since the model has done so already
+= It's a self-correction validation flow, and the discrepancy gets flagged.
+
+@4.4|S5|M
+Developers dismiss many findings, and you want to know why. Which field helps?
++ `detected_pattern`, recording the code construct that triggered each finding
+- `model_version`, recording which of the models generated each of the findings
+- `word_count`, recording how long each comment was when it got posted
+- `is_important`, recording the model's own opinion of each finding's importance
+= `detected_pattern` lets you group dismissals by the code construct that triggered them. Model version, word count and the model's opinion don't show which patterns cause false alarms.
+
+@4.4|S5|H
+Analysis shows that 70% of dismissed findings share one `detected_pattern`. What should you do?
++ Investigate that pattern, then revise the criteria or add examples for it
+- Ignore it, since dismissal behavior says nothing about the review's quality
+- Raise the model's confidence threshold across all of the review's categories
+- Retrain the model on those findings, so that it stops producing that pattern
+= That's what the field is for. Training is out of scope, and a global threshold is imprecise.
+
+@4.4|S6|H
+A retry loop runs up to five times on all failures. Costs are high, and absent-data cases always fail. What's the best improvement?
++ Classify failures first, and retry only those that retrying can fix
+- Reduce the limit to one retry for all failures, whatever their type
+- Increase the limit to ten retries, so that hard cases have a better chance
+- Send all failures to a larger model, without any explanation of the error
+= Distinguish fixable errors from absent information.
+
+@4.4|S6|M
+What's a good response when a required value truly isn't in the source?
++ Return null, and flag it for follow-up
+- Retry until a value is produced
+- Invent a plausible default value
+- Copy a value from similar documents
+= Absent data can't be retried into existence, and fabricating is the worst outcome. Null plus a flag is honest, and values from other documents aren't evidence.
+
+@4.4|S6|H
+A source contract has two different start dates. What's the best extraction behavior?
++ Set `conflict_detected`, include both values with locations, and route it for review
+- Choose the later of the two dates, as later values usually supersede earlier ones
+- Retry until the model settles on one of the dates, and then accept whatever it says
+- Leave the field out, and don't mention that the document contained any conflict
+= Surface conflicts rather than resolving them arbitrarily.
+
+@4.4|S6|M
+Which retry message is the most useful?
++ "`line_items` sum to 104.50, but `total` is 140.50. Re-check both against the document."
+- "Your answer failed our validation, so please read it again and be more accurate."
+- "This is very important for our finance team, so please try again and get it right."
+- "Please output JSON. Please output JSON. Please output JSON. Do not output anything else."
+= It gives the specific mismatch to check against the document. Generic requests, stated importance, or repeating a format instruction don't tell the model what's wrong.
+
+@4.4|S6|E
+What's the main limit of retry loops?
++ They can't supply information that's absent from the source
+- They can only ever be used with synchronous API calls
+- They don't work with the use of JSON schemas at all
+- They always raise the model's confidence, not its accuracy
+= Retries can correct format and structure errors, but they can't create information that the source doesn't contain. They work with schemas and aren't limited to synchronous calls.
+
+@4.4|S5|H
+Feedback data shows that a finding type is dismissed by one team, and accepted by another. What should you check?
++ Whether criteria should differ by codebase, using `detected_pattern`
+- Whether the first team should be told that they must accept all of its findings
+- Whether the review should be stopped for both teams until they've agreed on it
+- Whether the model should be told to be friendlier to the team that's dismissing
+= Teams may legitimately differ, so segment by team and `detected_pattern`, then adapt the criteria. Forcing acceptance, stopping reviews or changing tone doesn't explain the difference.
+
+@4.4|S6|H
+Your validator catches a mismatch, and the retry fixes the sum by changing a line item that was correct. What does this suggest?
++ Retries can force plausible but wrong fixes, so recheck against the source
+- Retry feedback should be removed, since the model can't use any specific information at all
+- A sum mismatch can only happen because of a schema problem, and not in the extraction
+- The validator should be turned off, since it's what led to the change in a correct value
+= Feedback can produce forced fixes. Keep source evidence and send doubts to review.
+
+@4.4|S6|M
+Why doesn't tool use remove the need for validation?
++ It guarantees structure, and not whether values are correct
+- It's disabled when documents are larger than a few pages
+- It returns plain text, which needs to be parsed and checked
+- It stops the model from reading numbers in the document
+= A schema guarantees shape, while totals and field placement can still be wrong. Tool use returns structured data and handles long documents, so the other claims are false.
+
+@4.4|S6|H
+Select the two failures likely to succeed on a retry with feedback.
++ A wrong date format
++ A value placed in the wrong field
+- A value found only in an unattached file
+- A page missing from the scanned source
+- A number that isn't present in the document
+= Format and placement are fixable. Absent information isn't.
+
+@4.4|S5|H
+Select the two fields that support feedback-loop analysis or self-checking.
++ `detected_pattern`
++ `conflict_detected`
+- `please_retry`
+- `max_tokens`
+- `tool_choice`
+= Those two serve analysis and self-checking. The others aren't output fields for this.
+
+@4.5|S5|E
+What does the guide say the Message Batches API offers?
++ 50% cost savings, up to 24-hour processing, and no latency SLA
+- 90% cost savings, 1-hour processing, and a guaranteed latency SLA
+- The same price, faster processing, and multi-turn tool calling inside
+- 25% cost savings, 4-hour processing, and streaming results as they finish
+= The guide states 50% savings, a processing window of up to 24 hours, and no latency SLA. It doesn't support multi-turn tool calling within a request, and the other figures are wrong.
+
+@4.5|S5|E
+Which workload suits the batch API?
++ An overnight technical debt report
+- A blocking pre-merge check
+- A chatbot's live customer reply
+- A developer waiting at a terminal
+= An overnight report can wait up to the batch window. The other three have someone waiting, and batch has no latency guarantee.
+
+@4.5|S5|M
+Your manager wants a pre-merge check moved to batch, to save money. What's the problem?
++ Batch has no latency guarantee, and can take up to 24 hours, blocking merges
+- Batch can't process code, and only accepts plain natural-language documents
+- Batch costs more than the synchronous API for jobs of fewer than 100 items
+- Batch results come back in random order, which CI can't possibly handle
+= Blocking workflows need the synchronous API. Results are correlated by `custom_id`, so order isn't the issue.
+
+@4.5|S6|M
+Can a batch request run a tool, receive its result, and continue in that same request?
++ No: batch doesn't support multi-turn tool calling inside a request
+- Yes: batch runs the agentic loop for you on Anthropic's servers
+- Yes, as long as tools are declared with a batch-specific flag
+- Only with `tool_choice: "any"` on each of the batch's requests
+= You can't execute tools mid-request. A single-turn structured extraction is fine.
+
+@4.5|S6|E
+How do you match batch results to their requests?
++ `custom_id`
+- Result order
+- `stop_reason`
+- Timestamps
+= `custom_id` correlates them. Order isn't guaranteed.
+
+@4.5|S6|M
+A batch of 10,000 finishes with 300 failures. What's the best next step?
++ Resubmit only the failed documents by `custom_id`, with suitable changes
+- Resubmit the entire batch, so that everything has been processed in the same way
+- Discard the failures, since a 3% failure rate is within a normal tolerance
+- Process them all through one long synchronous request as one combined document
+= Targeted resubmission saves cost, and fixes causes such as oversized documents through chunking.
+
+@4.5|S6|M
+Some batch documents failed for exceeding context limits. What modification helps?
++ Chunk those documents, then resubmit them
+- Resubmit them unchanged in a new batch
+- Use `tool_choice: "any"` when resubmitting
+- Raise the batch's `max_retries` to 100
+= Chunking fixes the cause. Resubmitting unchanged fails again, and `tool_choice` or more retries don't make a document smaller.
+
+@4.5|S6|H
+Before batch-processing 500,000 documents, what should you do to minimize costly resubmissions?
++ Refine the prompt on a sample set, to maximize first-pass success
+- Submit it all at once, then improve the prompt using the failed results
+- Skip validation for the first run, and do it during the second run only
+- Split it across many models, so that one of them is sure to do well
+= Refining on a sample finds problems cheaply, before they multiply. Submitting everything first makes every prompt flaw expensive, and skipping validation or spreading across models doesn't address it.
+
+@4.5|S6|H
+You must deliver results within 30 hours of receipt, and batch processing can take 24. How often must you submit?
++ At least every 6 hours, leaving up to 24 for processing
+- Once every 24 hours, as that's the length of the window
+- Once every 30 hours, to match the agreed SLA exactly
+- Once every 48 hours, to get the largest possible batches
+= An item could wait up to the full interval before submission, then up to 24 hours. So the interval can be at most 6 hours. The guide's example of 4-hour windows leaves margin.
+
+@4.5|S6|H
+An SLA requires results in 26 hours, with batch processing taking up to 24. What's the longest submission interval that still guarantees it?
++ 2 hours
+- 6 hours
+- 12 hours
+- 26 hours
+= 26 − 24 = 2 hours. Longer intervals could leave an item waiting too long.
+
+@4.5|S5|M
+Nightly test generation for all repositories is taking a costly synchronous run. What's the best option?
++ Move it to the batch API, as nobody is waiting on it overnight
+- Keep it synchronous, as test generation can't run in batch
+- Run it only monthly, with no other changes to the process
+- Move all interactive code review to the batch API as well
+= Nobody is waiting overnight, so batch gives half the cost. Test generation can run in batch if context is provided, monthly runs lose value, and interactive review must stay synchronous.
+
+@4.5|S5|H
+A nightly batch job would need tool calls to read files during generation. How can it still use batch?
++ Include the file contents in each request, so no tools are needed
+- Enable a flag allowing batch requests to pause while waiting for your tools to run
+- Have each batch request call back to your server by URL, for each needed file
+- Use `tool_choice: "any"`, so that batch can execute tools on your behalf
+= Pre-fetch context. Batch can't execute tools mid-request.
+
+@4.5|S6|M
+Which approach best matches two workflows: live chat replies, and a weekly audit?
++ Synchronous for chat, and batch for the audit
+- Batch for both, as that saves the most money
+- Synchronous for both, as it's always more accurate
+- Batch for chat, and synchronous for the audit
+= Match API to latency needs. Accuracy isn't the difference.
+
+@4.5|S6|E
+What's a consequence of "no guaranteed latency SLA"?
++ Results might take up to 24 hours
+- Results always arrive in one minute
+- Results are charged at a higher rate
+- Results may be lost after one hour
+= Results can take up to the 24-hour window, so plan for that. One-minute results aren't promised, batch is cheaper rather than dearer, and results aren't lost after an hour.
+
+@4.5|S5|H
+Select the two workloads for batch.
++ Weekly compliance audits
++ Overnight report generation
+- Pre-merge blocking checks
+- Live support replies
+- An IDE's inline suggestions
+= Audits and overnight reports can wait, so they suit batch's window. Pre-merge checks, live replies and IDE suggestions have someone waiting, and batch has no latency SLA.
+
+@4.5|S6|H
+Select the two correct batch failure practices.
++ Identify failures by `custom_id`
++ Change what caused failure, such as chunking long documents
+- Resubmit everything, including all the successes
+- Retry unchanged, until each one finally passes
+- Ignore the failures once 90% have succeeded
+= Use `custom_id` to find what failed, then fix the cause before resubmitting. Resubmitting successes wastes money, unchanged retries repeat the failure, and ignoring failures loses data.
+
+@4.6|S5|E
+Why is self-review in the same session weak?
++ It keeps its reasoning, so it rarely questions its decisions
+- The model can't read code it has previously written in that session
+- The API charges twice as much for reviewing code in the same session
+- The same session can only produce positive feedback on any code at all
+= Prior reasoning biases it. Independence is the fix.
+
+@4.6|S5|M
+What's the most effective way to review generated code?
++ A second, independent Claude instance without the generator's reasoning
+- The same session, asked to be highly critical of what it has just done
+- The same session with extended thinking, asked to double-check its work
+- The same session, asked to repeat its generation and compare the results
+= Independent instances beat self-review instructions or extended thinking, per the guide.
+
+@4.6|S5|M
+A 30-file PR review gives contradictory findings across files. What's the best structure?
++ Per-file local passes, plus a separate integration pass for cross-file issues
+- One large pass with a larger output limit, and a request for more consistency
+- A separate review only for the three files that have the most changed lines
+- One pass per reviewer, then a vote among them across all findings in the PR
+= It avoids attention dilution and contradictions. *Work guide sample 12 as well.*
+
+@4.6|S5|M
+What does a per-file pass miss by design?
++ Cross-file data flow issues, which need an integration pass
+- Local bugs in the file, which need an integration pass
+- Style issues, which need a dedicated style-only agent
+- Any security bug, which can't be found in a single file
+= Local passes see one file. Integration covers what spans files.
+
+@4.6|S5|H
+What's the purpose of verification passes with self-reported confidence on each finding?
++ To enable calibrated routing of findings to review
+- To remove any need for human reviewers on all findings
+- To make the model more accurate on the first attempt
+- To replace explicit criteria in the review's prompt
+= The guide uses it for calibrated review routing. The score still needs calibrating (TS 5.5).
+
+@4.6|S5|H
+The generator session's summary is given to the reviewer instance "for context." The reviewer now misses the same bugs. Why?
++ The summary carries the generator's reasoning, which undermines independence
+- The reviewer can't read any code if it has received a summary first
+- The summary used too few tokens to give the reviewer enough information
+- The reviewer's model automatically defers to all of its previous messages
+= Give requirements and code, and don't pass the generator's rationale.
+
+@4.6|S5|M
+Which input suits an independent reviewer?
++ The diff, the requirements and the review criteria
+- The generator's whole conversation and its reasoning
+- The generator's opinion about the risks of the code
+- Only the file names that were changed, without the diff
+= The diff, requirements and criteria are enough to review. The generator's reasoning or opinions remove independence, and file names alone don't contain the code.
+
+@4.6|S5|H
+Your integration pass flags a bug that per-file passes didn't: a field renamed in a producer, but not in a consumer. What does this show?
++ Multi-pass review's value: that bug only appears across files
+- Per-file passes were broken, and should be thrown out entirely
+- The integration pass should replace the per-file passes altogether
+- The bug could only have been caught by a human reviewer anyway
+= A rename across producer and consumer appears only across files, while per-file passes are better at local depth. Keep both, and neither pass is broken.
+
+@4.6|S5|M
+Extended thinking is enabled, and self-review still misses subtle issues. What should you try?
++ An independent instance for the review
+- A higher thinking budget in the same session
+- A stronger request to be self-critical
+- A second review in the same session
+= The issue is retained context, and more thinking in that context doesn't remove it.
+
+@4.6|S2|H
+A developer generates code and asks the same session, "Any bugs?", and it says no. A new session finds two. What's the best team practice?
++ Review generated code in a fresh session or an independent instance
+- Ask the original session three times, as it may find more on later attempts
+- Require the generator to include a confidence score with each piece of code
+- Ban the use of AI for reviews, as the two sessions have different opinions
+= A fresh instance lacks the reasoning that made the first session confident. Asking again in that session keeps the bias, a confidence score doesn't remove it, and banning AI review isn't warranted.
+
+@4.6|S5|E
+What's "attention dilution"?
++ Quality drops as one pass covers too much
+- Costs rise as more developers use a tool
+- Latency rises when two instances are used
+- Tokens fall as a session grows longer
+= One pass covering too much gives shallow, uneven analysis, which is why large reviews get split. Cost, latency and token count are separate concerns.
+
+@4.6|S5|H
+Select the two properties of effective multi-instance, multi-pass review.
++ The reviewer lacks the generator's reasoning context
++ Local analysis and integration analysis are separate passes
+- All passes share a single session, for continuity
+- Reviewers read the generator's rationale first
+- One pass covers everything, for maximum consistency
+= A reviewer without the generator's reasoning catches more, and separate passes avoid dilution. Shared sessions, reading the rationale first, or a single pass bring back those problems.
+
+@4.6|S5|M
+Why might a single pass report a pattern as bad in one file and fine in another?
++ Attention spreads unevenly across a large review
+- The API randomizes the review's severity field
+- The two files use different JSON schemas
+- The second file wasn't sent to the model
+= It's the dilution problem. Focused passes and explicit criteria reduce it.

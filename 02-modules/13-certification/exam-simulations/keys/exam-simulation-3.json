@@ -1,0 +1,608 @@
+[
+ {
+  "n": 1,
+  "answer": [
+   "A",
+   "B"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Subagents have isolated context, get what's in their prompt and return a final result. They don't see the parent's results, share memory or keep memory between invocations. *Build today: a fork subagent is a separate option that copies the conversation.*"
+ },
+ {
+  "n": 2,
+  "answer": [
+   "C"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Subagents don't share history, so the sources must be included in the prompt. Forcing a tool can't supply missing context, there's no minimum length, and `--resume` continues a session rather than passing context."
+ },
+ {
+  "n": 3,
+  "answer": [
+   "C"
+  ],
+  "ts": "1.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Subagents did what they were asked, and the logs show the missing areas were never assigned. Downstream changes treat a symptom. Synthesis shouldn't add unresearched content, and a section count doesn't ensure coverage."
+ },
+ {
+  "n": 4,
+  "answer": [
+   "C"
+  ],
+  "ts": "2.4",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Project scope shares the server, and environment variable expansion keeps secrets out of version control. User scope isn't required, committing keys is unsafe, and `CLAUDE.md` is committed text that doesn't configure servers."
+ },
+ {
+  "n": 5,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "The loop evaluates gaps, targets more research and resynthesizes. A full restart repeats the same narrow work, accepting leaves the gap, and general knowledge loses citations."
+ },
+ {
+  "n": 6,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.1",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Natural language isn't a reliable control signal, in either direction. `stop_reason` is the explicit signal. A count ignores what the task needs, and a required phrase is still probabilistic."
+ },
+ {
+  "n": 7,
+  "answer": [
+   "B"
+  ],
+  "ts": "2.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Agents misuse tools outside their specialization, so scoping fixes this. A prompt rule leaves the tool available, forcing every turn removes flexibility, and more iterations allow more of the wrong work."
+ },
+ {
+  "n": 8,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.5",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Deterministic normalization in code before reasoning is the pattern. External sources can't honor a requested format, prompts leave it to the model, and a subagent is disproportionate. Vague dates should be flagged rather than invented."
+ },
+ {
+  "n": 9,
+  "answer": [
+   "B"
+  ],
+  "ts": "5.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Returning empty results as success hides the gap and leads to a false conclusion. Softer wording doesn't reveal the failure, and terminating the entire workflow on one failure is also an anti-pattern."
+ },
+ {
+  "n": 10,
+  "answer": [
+   "A",
+   "C"
+  ],
+  "ts": "2.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Access failures and valid empty results are different, and need different handling. Treating them alike either hides failures or wastes effort, and retrying a valid empty result is pointless."
+ },
+ {
+  "n": 11,
+  "answer": [
+   "C"
+  ],
+  "ts": "5.6",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Analysis should include conflicting values with attribution, and let the coordinator decide. Silently resolving or averaging distorts the evidence, and stopping loses the rest of the analysis."
+ },
+ {
+  "n": 12,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.2",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Refinement continues until coverage is sufficient. A subagent's preference isn't the criterion, a fixed count ignores quality, and the first draft hasn't been evaluated. A maximum round count remains useful as a safety limit."
+ },
+ {
+  "n": 13,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.3",
+  "scenario": "Multi-Agent Research System",
+  "level": "M",
+  "why": "Structure keeps content and metadata distinct. It doesn't verify truth, the model still reads it, and prompts accept plain text too."
+ },
+ {
+  "n": 14,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.4",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "A guaranteed requirement needs programmatic enforcement, based on a recorded result. Prompt rules are probabilistic, a disclaimer doesn't meet the requirement, and weekly review comes after publication."
+ },
+ {
+  "n": 15,
+  "answer": [
+   "D"
+  ],
+  "ts": "1.6",
+  "scenario": "Multi-Agent Research System",
+  "level": "H",
+  "why": "Separate local passes avoid attention dilution, and a cross-document pass handles connections. A bigger model and a request for attention don't change the structure, and sampling misses evidence."
+ },
+ {
+  "n": 16,
+  "answer": [
+   "A"
+  ],
+  "ts": "1.3",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Context must be explicit, and should be focused on what each subagent needs. There's no inheritance, or history query, and a raw transcript wastes context."
+ },
+ {
+  "n": 17,
+  "answer": [
+   "A"
+  ],
+  "ts": "2.5",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Focused searches limit what enters context. A file read back consumes the same space, Glob doesn't search contents, and skimming doesn't change what's in context."
+ },
+ {
+  "n": 18,
+  "answer": [
+   "C",
+   "E"
+  ],
+  "ts": "2.4",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Resources give agents visibility into what's available, so that they can fetch only what's needed. A prompt can't supply the missing information, one tool per table degrades selection, and higher caps don't reduce calls."
+ },
+ {
+  "n": 19,
+  "answer": [
+   "A"
+  ],
+  "ts": "2.2",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Retrying won't fix an access failure, and the caller must know that it didn't succeed. The category should match the cause, and consider what details to expose. Empty success hides the failure."
+ },
+ {
+  "n": 20,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.5",
+  "scenario": "Developer Productivity with Claude",
+  "level": "M",
+  "why": "Glob finds files by name or extension pattern. Grep searches contents, Read loads a file, and Edit modifies one."
+ },
+ {
+  "n": 21,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.3",
+  "scenario": "Developer Productivity with Claude",
+  "level": "M",
+  "why": "`any` requires a tool and lets the model choose. `auto` allows text, a named tool chooses for the model, and the last isn't a guide option. *Build today: forced modes are rejected on some current models, so check the docs.*"
+ },
+ {
+  "n": 22,
+  "answer": [
+   "C"
+  ],
+  "ts": "2.3",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Scoping limits what's possible. A prompt is only guidance, reverting acts after the fact, and passing everything down is the opposite of scoping."
+ },
+ {
+  "n": 23,
+  "answer": [
+   "D"
+  ],
+  "ts": "1.5",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "A hook is code, so test it and make unexpected input visible. A monthly sample is slow, removing the hook brings back the problem, and the model may not notice anything is wrong."
+ },
+ {
+  "n": 24,
+  "answer": [
+   "D"
+  ],
+  "ts": "1.1",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "The API doesn't keep the conversation for you here, so history must be sent each time. Without it, the model has no record of what it did. The other options describe behavior that doesn't exist. Trimming results reduces tokens safely."
+ },
+ {
+  "n": 25,
+  "answer": [
+   "B"
+  ],
+  "ts": "3.2",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Isolation keeps exploratory content from influencing later work. `argument-hint` prompts for parameters, \"forget\" isn't reliable, and `CLAUDE.md` makes it worse."
+ },
+ {
+  "n": 26,
+  "answer": [
+   "B"
+  ],
+  "ts": "2.1",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "Tools from all servers sit together, so selection depends on descriptions. Scope doesn't set priority, a blanket note is wrong for many queries, and an agent can use several servers."
+ },
+ {
+  "n": 27,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.7",
+  "scenario": "Developer Productivity with Claude",
+  "level": "H",
+  "why": "The validity of the context drives the choice. A name only helps you find a session, and token use and model version don't tell you whether the results are still correct."
+ },
+ {
+  "n": 28,
+  "answer": [
+   "B"
+  ],
+  "ts": "1.7",
+  "scenario": "Developer Productivity with Claude",
+  "level": "M",
+  "why": "Named resumption continues a specific prior conversation. The other options don't restore a conversation."
+ },
+ {
+  "n": 29,
+  "answer": [
+   "C"
+  ],
+  "ts": "1.1",
+  "scenario": "Developer Productivity with Claude",
+  "level": "M",
+  "why": "Every `tool_use` needs a matching `tool_result`, and they go back together. Skipping one breaks the exchange, a call in between leaves a result missing, and results don't belong in the system prompt."
+ },
+ {
+  "n": 30,
+  "answer": [
+   "D"
+  ],
+  "ts": "2.5",
+  "scenario": "Developer Productivity with Claude",
+  "level": "M",
+  "why": "Incremental exploration builds understanding while conserving context. Reading everything exhausts it, file size isn't a guide, and general knowledge isn't this code."
+ },
+ {
+  "n": 31,
+  "answer": [
+   "B"
+  ],
+  "ts": "5.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Subagents isolate verbose exploration, while the main agent coordinates. Reading the file brings the output back, ignored text still occupies context, and output limits don't add context."
+ },
+ {
+  "n": 32,
+  "answer": [
+   "A"
+  ],
+  "ts": "5.3",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Propagate unresolved errors with what was attempted and partial results, so the main session can decide. Hiding the gap misleads, and discarding results wastes work."
+ },
+ {
+  "n": 33,
+  "answer": [
+   "B"
+  ],
+  "ts": "5.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Upstream agents should return structured data when downstream context is limited. Repeating adds to the load, a one-liner loses detail, and shorter sentences leave the volume in place."
+ },
+ {
+  "n": 34,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.5",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Specific input and output pins down the behavior. General requests don't say what's wrong, and a `CLAUDE.md` note is too general for this bug."
+ },
+ {
+  "n": 35,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.2",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "`argument-hint` prompts for required parameters. The others control context, tools or file matching."
+ },
+ {
+  "n": 36,
+  "answer": [
+   "A",
+   "D"
+  ],
+  "ts": "3.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Those two are true. Several files can load, user files affect only that user, and project files are shared."
+ },
+ {
+  "n": 37,
+  "answer": [
+   "B"
+  ],
+  "ts": "3.3",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Glob-scoped rules apply by file type regardless of location, and load only when relevant. Copies drift, the root file loads everywhere, and a manual command relies on memory."
+ },
+ {
+  "n": 38,
+  "answer": [
+   "C"
+  ],
+  "ts": "5.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Progressive summarization loses specific values, so keep them in a persistent structured location. The other explanations don't match how summaries work."
+ },
+ {
+  "n": 39,
+  "answer": [
+   "B"
+  ],
+  "ts": "3.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Plan first for architectural decisions and several valid approaches, then execute. Starting direct risks costly rework, and plan mode isn't where the implementation stays. A long prompt skips exploration."
+ },
+ {
+  "n": 40,
+  "answer": [
+   "A"
+  ],
+  "ts": "3.5",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "The interview pattern surfaces considerations such as key design and failure modes before implementation."
+ },
+ {
+  "n": 41,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.2",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Project-scoped commands are shared through version control. The home directory is personal, `CLAUDE.md` isn't a command definition, and no such config file exists."
+ },
+ {
+  "n": 42,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.1",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "`.claude/rules/` organizes topics. User-level files aren't shared, copies drift, and deleting loses standards."
+ },
+ {
+  "n": 43,
+  "answer": [
+   "D"
+  ],
+  "ts": "5.6",
+  "scenario": "Code Generation with Claude Code",
+  "level": "M",
+  "why": "Attribution is lost in summarization unless claim-source mappings are carried forward. A general list doesn't link claims to sources."
+ },
+ {
+  "n": 44,
+  "answer": [
+   "A"
+  ],
+  "ts": "5.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Structured state exports and a manifest let the coordinator resume and inject state into agent prompts. Conversation state may be lost or stale, restarting wastes work, and free-form logs aren't reliably usable."
+ },
+ {
+  "n": 45,
+  "answer": [
+   "C",
+   "D"
+  ],
+  "ts": "5.4",
+  "scenario": "Code Generation with Claude Code",
+  "level": "H",
+  "why": "Those are signs of context degradation, and scratchpads and subagents counter it. Asking it to remember doesn't restore detail, rereading everything crowds context further, and `max_tokens` limits only the reply."
+ },
+ {
+  "n": 46,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.6",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "M",
+  "why": "`-p` prevents an input hang, and JSON with a schema gives machine-parseable output. The second is interactive, the third resumes a session, and the last uses options that aren't real."
+ },
+ {
+  "n": 47,
+  "answer": [
+   "B"
+  ],
+  "ts": "4.5",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Latency-tolerant work suits batches, with those limits. There's no one-hour guarantee, and batches don't support executing tools mid-request."
+ },
+ {
+  "n": 48,
+  "answer": [
+   "D"
+  ],
+  "ts": "4.6",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "M",
+  "why": "Self-reported confidence can support calibrated review routing, but it isn't proof, and raw thresholds aren't reliable on their own."
+ },
+ {
+  "n": 49,
+  "answer": [
+   "D"
+  ],
+  "ts": "4.3",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "M",
+  "why": "Required fields can pressure the model to fabricate. Nullable fields let it report that there's no clear fix."
+ },
+ {
+  "n": 50,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.2",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Few-shot examples are the most effective way to get consistently formatted, actionable output when instructions alone fall short."
+ },
+ {
+  "n": 51,
+  "answer": [
+   "D"
+  ],
+  "ts": "3.6",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Non-interactive input fits. The other options pollute the repo, assume memory across jobs, or need a person."
+ },
+ {
+  "n": 52,
+  "answer": [
+   "B"
+  ],
+  "ts": "4.4",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Tracking which constructs trigger findings enables systematic analysis of dismissal patterns. A model can't report what developers later did, hiding by confidence isn't analysis, and free text is hard to aggregate."
+ },
+ {
+  "n": 53,
+  "answer": [
+   "A",
+   "D"
+  ],
+  "ts": "4.6",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Independent instances and multi-pass structure work well. A generating session keeps its own reasoning, so self-review and extended thinking are less effective, and requiring consensus suppresses real findings."
+ },
+ {
+  "n": 54,
+  "answer": [
+   "C"
+  ],
+  "ts": "4.4",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "M",
+  "why": "Schemas prevent syntax errors, not semantic ones. Checking the value needs code, and specific error feedback guides correction."
+ },
+ {
+  "n": 55,
+  "answer": [
+   "C"
+  ],
+  "ts": "4.1",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Specific categorical criteria beat general or confidence-based instructions, which don't define what should be reported."
+ },
+ {
+  "n": 56,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.5",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "M",
+  "why": "Batches have no latency guarantee, so blocking checks should stay synchronous. Nightly and weekly jobs can use them. Batches can return structured results."
+ },
+ {
+  "n": 57,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.2",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Examples with reasoning distinguish acceptable patterns from real issues, and allow generalization. A file list doesn't generalize, and suppression would hide real bugs."
+ },
+ {
+  "n": 58,
+  "answer": [
+   "A"
+  ],
+  "ts": "4.1",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "M",
+  "why": "Explicit criteria with code examples give consistent classification. Asking for more thought doesn't define the levels, and the others avoid the problem."
+ },
+ {
+  "n": 59,
+  "answer": [
+   "C"
+  ],
+  "ts": "3.2",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "On-demand, task-specific workflows suit skills, and a checked-in one is versioned and shared. `CLAUDE.md` loads it everywhere, a runner's home isn't versioned, and PR descriptions aren't a reliable source."
+ },
+ {
+  "n": 60,
+  "answer": [
+   "C"
+  ],
+  "ts": "4.6",
+  "scenario": "Claude Code for Continuous Integration",
+  "level": "H",
+  "why": "Per-file passes can't see contracts that span files, so an integration pass is needed. The other options stay within single-file views or skip files."
+ }
+]

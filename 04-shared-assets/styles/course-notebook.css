@@ -1,0 +1,261 @@
+/* ===========================================================================
+   Notebook variant — the handwritten-study-notes look, as REAL text.
+   Everything stays searchable, selectable and annotatable; nothing is a
+   generated image. Swap in place of course.css with --style notebook.
+   =========================================================================== */
+
+:root {
+  --paper:      #FDFBF2;   /* warm notebook page */
+  --rule:       #CBDCEB;   /* feint blue ruling */
+  --margin-rule:#E8B4B8;   /* the pink margin line */
+  --ink:        #1C3461;   /* blue pen */
+  --ink-black:  #23262B;   /* black pen */
+  --ink-red:    #B3261E;   /* red pen, for warnings */
+  --ink-green:  #1B6B4A;
+  --ink-soft:   #5A6B8C;
+
+  --hl-yellow:  #FFF2A8;
+  --hl-green:   #CDEFD6;
+  --hl-pink:    #FBD5E0;
+  --hl-blue:    #CFE4F7;
+
+  --hand:  "Patrick Hand", "Caveat", cursive;   /* body handwriting */
+  --hand2: "Architects Daughter", cursive;       /* headings */
+  --marker:"Caveat", cursive;                    /* labels, margin notes */
+  --mono:  "JetBrains Mono", Consolas, monospace;
+
+  --line: 7.6mm;            /* ruling pitch — body line-height matches it */
+}
+
+@page { size: A4; }
+
+/* ---- the page: ruled paper + margin rule + spiral holes ---- */
+html {
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  background: var(--paper);
+}
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--hand);
+  font-size: 13.2pt;
+  line-height: var(--line);
+  background-color: var(--paper);
+  background-image:
+    /* vertical margin rule */
+    linear-gradient(to right, transparent 9mm, var(--margin-rule) 9mm,
+                    var(--margin-rule) 9.35mm, transparent 9.35mm),
+    /* horizontal ruling */
+    repeating-linear-gradient(to bottom, transparent, transparent calc(var(--line) - 0.3mm),
+                    var(--rule) calc(var(--line) - 0.3mm), var(--rule) var(--line));
+  background-size: 100% 100%, 100% var(--line);
+  background-repeat: no-repeat, repeat;
+  /* shift the ruling so text baselines land ON the lines, not between them */
+  background-position: 0 0, 0 2.0mm;
+}
+
+/* every top-level block starts to the RIGHT of the margin rule */
+body > * { margin-left: 13mm; }
+/* ...except full-bleed blocks, which may use the margin for annotations */
+body > .marginnote { margin-left: 2mm; }
+
+p { margin: 0 0 var(--line); orphans: 3; widows: 3; }
+/* bold = pressed harder with the pen, not highlighted */
+strong { font-weight: 400; color: #0E2347; -webkit-text-stroke: 0.35px #0E2347; }
+/* ==text== = an actual highlighter stroke, used sparingly */
+mark { background: var(--hl-yellow); color: inherit;
+       padding: 0 1mm; border-radius: 2px; box-decoration-break: clone; }
+mark.g { background: var(--hl-green); }
+mark.p { background: var(--hl-pink); }
+mark.b { background: var(--hl-blue); }
+em { font-style: normal; color: var(--ink-red); }
+
+/* ---- headings: hand-lettered, boxed like a real page ---- */
+h1 {
+  font-family: var(--hand2); font-size: 26pt; line-height: 1.15;
+  color: var(--ink); margin: 0 0 var(--line);
+  border: 2.2px solid var(--ink); border-radius: 10px 3px 12px 4px;
+  padding: 3mm 5mm; display: inline-block;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+h2 {
+  font-family: var(--hand2); font-size: 17pt; color: var(--ink);
+  margin: calc(var(--line) * 1.5) 0 var(--line);
+  /* display: table keeps the shrink-to-fit look. inline-block ignored break-after. */
+  display: table; padding: 0 2mm 1mm;
+  background: linear-gradient(transparent 62%, var(--hl-yellow) 62%);
+  border-bottom: 2px solid var(--ink);
+}
+/* Never strand a heading at the bottom of a page. */
+h2, h3, h4 { break-after: avoid; }
+h3 {
+  font-family: var(--hand2); font-size: 13.6pt; color: var(--ink-green);
+  margin: var(--line) 0 2mm;
+}
+h4 { font-family: var(--marker); font-size: 14pt; color: var(--ink-soft);
+     margin: 3mm 0 1mm; }
+
+/* ---- lists with hand-drawn bullets ---- */
+ul, ol { margin: 0 0 var(--line); padding-left: 8mm; }
+li { margin-bottom: 1.2mm; }
+ul li::marker { content: "→ "; color: var(--ink-red); }
+ol li::marker { color: var(--ink-red); }
+
+/* ---- code: looks taped onto the page ---- */
+code {
+  font-family: var(--mono); font-size: 0.78em; color: var(--ink-black);
+  background: var(--hl-blue); padding: 0.3mm 1.2mm; border-radius: 2px;
+}
+pre {
+  font-family: var(--mono); font-size: 8.6pt; line-height: 1.5;
+  background: #FFFEF8; color: var(--ink-black);
+  border: 1.6px solid var(--ink-soft); border-radius: 3px 10px 3px 10px;
+  padding: 3mm 4mm; margin: 0 0 var(--line); white-space: pre-wrap;
+  box-shadow: 2px 2px 0 rgba(28,52,97,.18); break-inside: avoid;
+}
+pre code { background: none; padding: 0; }
+
+/* ---- tables drawn by hand ---- */
+table { width: 100%; border-collapse: collapse; margin: 0 0 var(--line);
+        font-size: 11.4pt; break-inside: avoid; }
+th {
+  font-family: var(--hand2); text-align: left; color: var(--ink);
+  background: var(--hl-blue); border: 1.6px solid var(--ink);
+  padding: 1.6mm 2.2mm;
+}
+td { border: 1.4px solid var(--ink-soft); padding: 1.6mm 2.2mm; vertical-align: top; }
+
+/* ---- callouts: sticky notes and boxed asides ---- */
+.callout {
+  margin: 0 0 var(--line); padding: 3mm 4mm;
+  border: 2px solid var(--ink); border-radius: 12px 4px 12px 4px;
+  background: #FFFEF8; break-inside: avoid;
+  box-shadow: 2.5px 2.5px 0 rgba(28,52,97,.2);
+}
+.callout > :last-child { margin-bottom: 0; }
+.callout .label {
+  display: block; font-family: var(--marker); font-size: 16pt;
+  line-height: 1; margin-bottom: 1.6mm; color: var(--ink);
+}
+.callout.key     { background: var(--hl-green);  border-color: var(--ink-green); }
+.callout.key .label     { color: var(--ink-green); }
+.callout.tip     { background: var(--hl-blue); }
+.callout.warn    { background: var(--hl-yellow); border-color: #9A5B06; }
+.callout.warn .label    { color: #9A5B06; }
+.callout.mistake { background: var(--hl-pink);  border-color: var(--ink-red); }
+.callout.mistake .label { color: var(--ink-red); }
+.callout.answer  { background: #EFE7FB; border-color: #5B3E8E; }
+.callout.answer .label  { color: #5B3E8E; }
+.callout.real    { background: #FFFEF8; border-style: dashed; }
+
+/* the thesis box at the top of a lesson */
+.key-idea {
+  margin: 0 0 var(--line); padding: 4mm 5mm;
+  background: var(--hl-green); border: 2.4px solid var(--ink-green);
+  border-radius: 14px 5px 14px 5px; break-inside: avoid;
+  box-shadow: 3px 3px 0 rgba(27,107,74,.25);
+}
+.key-idea .label {
+  font-family: var(--marker); font-size: 18pt; color: var(--ink-green);
+  display: block; margin-bottom: 1.5mm; line-height: 1;
+}
+
+/* margin note, in the pink margin like a real annotation */
+.marginnote {
+  font-family: var(--marker); font-size: 15pt; line-height: 1.2;
+  color: var(--ink-red); margin: 0 0 var(--line);
+  padding-left: 3mm; border-left: 2.5px solid var(--ink-red);
+  transform: rotate(-0.6deg);
+}
+
+/* ---- figures ---- */
+figure {
+  margin: 0 0 var(--line); padding: 3mm; text-align: center;
+  background: #FFFEF8; border: 2px solid var(--ink-soft);
+  border-radius: 10px 4px 10px 4px; break-inside: avoid;
+  box-shadow: 2.5px 2.5px 0 rgba(28,52,97,.15);
+}
+figure svg, figure img { max-width: 100%; height: auto; }
+/* Wide LR charts rendered at their natural width and came out too small to
+   read. Fill the column; the viewBox keeps proportions, and max-height still
+   stops a tall TD chart eating a page. */
+/* Mermaid writes an inline style="max-width:NNNpx" on the SVG, which beats a
+   plain CSS rule and leaves wide LR charts rendered too small to read.
+   !important is required here, not laziness. */
+figure.diagram svg { width: 100% !important; max-width: 100% !important;
+                     height: auto; max-height: 120mm; }
+pre.mermaid { background: none; border: none; padding: 0; margin: 0;
+              box-shadow: none; white-space: normal; }
+figcaption {
+  margin-top: 2mm; font-family: var(--marker); font-size: 13pt;
+  color: var(--ink-soft); text-align: left; line-height: 1.25;
+}
+figcaption .num { color: var(--ink-red); }
+
+/* ---- Q&A, revision, notespace ---- */
+.qa { break-inside: avoid; margin-bottom: 3mm; }
+.qa .q { color: var(--ink-red); padding-left: 7mm; text-indent: -7mm; }
+.qa .q::before { content: "Q "; font-family: var(--marker); font-size: 16pt; }
+.qa .a { padding-left: 7mm; text-indent: -7mm; }
+.qa .a::before { content: "A "; font-family: var(--marker); font-size: 16pt; color: var(--ink-green); }
+
+.revision {
+  border: 2.4px dashed var(--ink-green); border-radius: 12px 4px 12px 4px;
+  padding: 4mm 5mm; background: #F4FBF6; break-inside: avoid;
+  margin-bottom: var(--line);
+}
+.revision h3 { margin-top: 0; font-size: 15pt; }
+
+.notespace {
+  break-inside: avoid; margin: var(--line) 0;
+  border: 2px dashed var(--ink-soft); border-radius: 10px 4px 10px 4px;
+  padding: 2.5mm 3mm 3mm; background: rgba(255,255,255,.35);
+}
+.notespace .label { font-family: var(--marker); font-size: 15pt;
+                    color: var(--ink-soft); display: block; }
+.notespace.tall { min-height: 60mm; }
+.notespace.short { min-height: 30mm; }
+
+/* ---- page furniture ---- */
+.lesson { break-before: page; }
+.lesson-meta { font-family: var(--marker); font-size: 14pt; color: var(--ink-red); }
+.prereq {
+  font-family: var(--marker); font-size: 14pt; color: var(--ink-soft);
+  background: rgba(255,255,255,.5); border-left: 3px solid var(--ink-soft);
+  padding: 2mm 3mm; margin: 0 0 var(--line); break-inside: avoid;
+}
+.cover { break-after: page; padding-top: 14mm; }
+.cover .eyebrow { font-family: var(--marker); font-size: 20pt; color: var(--ink-red); }
+.cover h1 { font-size: 32pt; }
+.cover .sub { font-family: var(--hand); font-size: 14pt; color: var(--ink-soft);
+              margin: var(--line) 0; }
+.cover .meta { font-size: 12pt; }
+.toc { break-after: page; }
+hr { border: none; border-top: 2px dashed var(--ink-soft); margin: var(--line) 0; }
+blockquote { margin: 0 0 var(--line); padding-left: 4mm;
+             border-left: 3px solid var(--margin-rule); color: var(--ink-soft); }
+.small { font-size: 11pt; color: var(--ink-soft); }
+
+/* ---- Java listings (LLD course) ----------------------------------------
+   Added for the LLD course, which is code-heavy. Colours are drawn from the
+   existing ink palette so listings sit inside the notebook aesthetic rather
+   than importing a separate editor theme.
+
+   The hanging indent matters: a wrapped line that returns to column 0 reads
+   as a new statement. padding-left + negative text-indent keeps continuation
+   lines visually inside the block. */
+pre.code.java {
+  font-size: 8.8pt; line-height: 1.52;
+  tab-size: 4;
+}
+pre.code.java code { display: block; }
+pre.code.java .k { color: #1C3461; font-weight: 700; }   /* keyword   */
+pre.code.java .t { color: #7A3E9D; }                      /* type      */
+pre.code.java .s { color: #1B6B4A; }                      /* string    */
+pre.code.java .c { color: #8A93A0; font-style: italic; }  /* comment   */
+pre.code.java .a { color: #B3261E; }                      /* annotation*/
+pre.code.java .n { color: #8A6D00; }                      /* number    */
+pre.code.java .l { color: #B3261E; font-weight: 700; }    /* literal   */
+
+/* JetBrains Mono ligatures drew "->" as an arrow and "(?<=" as "(?≤", misrepresenting code. */
+pre, code, pre *, code * { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

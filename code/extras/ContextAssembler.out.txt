@@ -1,0 +1,4 @@
+budget=4000 used=2599 kept=40 dropped=0 last=Where is my refund?
+budget=1000 used=999 kept=15 dropped=25 last=Where is my refund?
+budget=300 used=295 kept=4 dropped=36 last=Where is my refund?
+budget=20 rejected: Fixed context exceeds the budget: 39

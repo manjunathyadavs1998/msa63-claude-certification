@@ -1,0 +1,810 @@
+@3.1|S2|E
+Which file holds instructions that apply to you alone, across all of your projects?
++ `~/.claude/CLAUDE.md`
+- `CLAUDE.md` at the repository root
+- `.claude/CLAUDE.md` in the project
+- A subdirectory's `CLAUDE.md`
+= User-level memory is personal and isn't in version control. The others are project or directory level.
+
+@3.1|S2|M
+A new developer's Claude Code ignores the team's code style. Everyone else's follows it. What's the most likely cause?
++ The rules are in other people's `~/.claude/CLAUDE.md`
+- The new developer's model is older, and doesn't support CLAUDE.md files
+- CLAUDE.md files only load after they've been in the repo for 24 hours
+- The team's project needs a config flag, for loading any rules at all
+= User-level instructions aren't shared. Moving them to project level fixes it. The others are false.
+
+@3.1|S2|E
+How do you share instructions with the team through version control?
++ Put them in a project-level CLAUDE.md
+- Put them in `~/.claude/CLAUDE.md`
+- Send them to each developer by email
+- Put them in the model's output style
+= Project-level files are checked in, so teammates get them. User-level files aren't shared, and emails or output styles aren't how instructions load.
+
+@3.1|S2|M
+A monorepo's `payments/` package needs extra conventions that apply nowhere else. What's a good place for them?
++ A `CLAUDE.md` in the `payments/` directory
+- The user-level file of whoever maintains the package
+- The root file, with a note saying they're for payments
+- A skill that developers must remember to invoke
+= Directory-level files scope to that subtree. User-level isn't shared, root loads everywhere, and a skill is on-demand.
+
+@3.1|S2|M
+Your root CLAUDE.md is 900 lines covering testing, APIs and deployment. What's a good restructuring?
++ Split it into topic files in `.claude/rules/`, such as `testing.md`
+- Delete sections until it's short, and rely on developers to remember the rest
+- Move it all to `~/.claude/CLAUDE.md`, so that it's no longer in the repository
+- Copy it into each subdirectory, so that each one has its own complete version
+= `.claude/rules/` organizes topics. Deleting loses standards, user-level isn't shared, and copies drift.
+
+@3.1|S2|M
+Different packages need different subsets of your standards. What's the best way to include them?
++ Use `@import` in each package's CLAUDE.md, for the standards relevant to it
+- Paste all the standards into each package's file, and keep them in sync by hand
+- Include every standard at the root, and let Claude decide which ones to ignore
+- Create one skill per standard, and ask developers to run them before each edit
+= `@import` keeps it modular and selective. Copies drift, the root loads everything, and manual skills are unreliable.
+
+@3.1|S2|M
+Claude seems to follow a rule in one session and not in another. Which command helps you diagnose this?
++ `/memory`
+- `/compact`
+- `/clear`
+- `/resume`
+= `/memory` shows which memory files are loaded. The others manage context or sessions.
+
+@3.1|S2|E
+Which syntax references an external file from CLAUDE.md?
++ `@import`
+- `#include`
+- `require()`
+- `<link>`
+= The guide names `@import`. *Current docs write this as `@path/to/file`.*
+
+@3.1|S2|H
+A rule appears in root CLAUDE.md, yet it's not being followed in `services/api/`. `/memory` shows that `services/api/CLAUDE.md` is loaded and says something different. What's the best fix?
++ Resolve the conflict, so that the two files don't contradict each other
+- Raise the priority of the root file using a numeric frontmatter field
+- Delete `/memory` output from the session, so the conflict's no longer seen
+- Run `/compact`, as that merges all memory files into one consistent version
+= Conflicting instructions lead to inconsistent behavior, so remove the conflict. The others aren't features.
+
+@3.1|S2|M
+What's the main reason not to put team standards in a user-level file?
++ They aren't shared with teammates through version control
+- User-level files can only hold a very small number of lines
+- User-level files aren't read in interactive sessions at all
+- User-level files are deleted when Claude Code gets updated
+= That's what distinguishes user level. The others are false.
+
+@3.1|S2|H
+Maintainers of each package know which standards apply to it. Which design lets them control that?
++ Each package's CLAUDE.md imports only the standards files its maintainers choose
+- A central script writes one combined file into each package's directory at build time
+- All standards load for all packages, and the model works out the relevant ones
+- A user-level file on each maintainer's machine holds that package's standards
+= Selective `@import` by maintainers fits. The others add machinery, load everything, or aren't shared.
+
+@3.1|S5|M
+In CI, Claude Code must follow project conventions. Where should those go?
++ In the repository's CLAUDE.md
+- In the CI runner's home-directory file
+- In a Slack message to the team
+- In the model's hidden system prompt
+= Project-level CLAUDE.md is how CI-invoked Claude Code gets project context. A runner's home file isn't version-controlled with the project.
+
+@3.1|S2|H
+You want to confirm that a colleague's session loads `.claude/rules/testing.md`. What's the direct method?
++ Have them run `/memory` in that session
+- Have them run `--output-format json` on it
+- Ask Claude whether it generally knows about testing
+- Inspect the Git history of the rules directory
+= `/memory` verifies what's loaded. Asking the model isn't reliable, and Git shows only that the file exists.
+
+@3.1|S2|M
+Where do topic-specific rule files live?
++ `.claude/rules/`
+- `.claude/skills/`
+- `.claude/commands/`
+- `.claude/hooks/`
+= Rules live in `.claude/rules/`. Skills and commands are invoked workflows.
+
+@3.1|S4|H
+Which belongs in CLAUDE.md rather than a skill?
++ "All services use structured logging with a correlation ID"
+- A 40-step procedure for preparing a quarterly release
+- A one-off template for this week's migration report
+- A verbose codebase analysis run only now and then
+= Always-applicable standards go in CLAUDE.md. Occasional, task-specific workflows go in skills.
+
+@3.1|S2|H
+Select the two statements that are true of the CLAUDE.md hierarchy.
++ User-level instructions aren't shared through version control
++ Directory-level files apply to work in that subtree
+- Only one CLAUDE.md file can be loaded in any session
+- Project-level files apply only to the developer who wrote them
+- User-level files override everything for all teammates
+= Those are true. Multiple files can load, project files are shared, and user files affect only that user.
+
+@3.1|S2|H
+Select the two good uses for `.claude/rules/`.
++ Splitting a huge CLAUDE.md into topic files
++ Conventions scoped to paths through frontmatter
+- Storing API keys that the team needs to share
+- Holding one developer's personal preferences
+- Storing the conversation history of past sessions
+= Topic organization and path scoping are its uses. Secrets don't belong there, and personal preferences belong at user level.
+
+@3.1|S2|M
+A file in `.claude/rules/` is committed, and teammates receive it. What's the scope?
++ Project: it's shared through version control
+- User: it's visible to its author only
+- Session: it's removed on exit
+- Global: it applies to all company repos
+= A file in the repository reaches everyone who pulls it, so it's project-scoped. It isn't personal, it persists past sessions, and it doesn't reach other repositories.
+
+@3.2|S2|E
+Where do you put a `/changelog` command that the whole team should get on clone?
++ `.claude/commands/`
+- `~/.claude/commands/`
+- `~/.claude/CLAUDE.md`
+- `.claude/rules/`
+= Project commands are shared through version control. *Build today: commands are merged into skills, and `.claude/skills/changelog/SKILL.md` also creates `/changelog`.*
+
+@3.2|S2|E
+Where do you put a command for your personal use across projects?
++ `~/.claude/commands/`
+- `.claude/commands/`
+- `.mcp.json`
+- `.claude/rules/`
+= `~/.claude/commands/` is user scope, so it's available in your projects and isn't shared. `.claude/commands/` is shared with the team, and the other two don't define commands.
+
+@3.2|S2|M
+Your `/analyze-codebase` skill outputs thousands of lines, crowding the session. What frontmatter helps?
++ `context: fork`
+- `allowed-tools: all`
+- `argument-hint: verbose`
+- `paths: ["**/*"]`
+= It runs the skill in an isolated sub-agent context, so its output doesn't pollute the main conversation. The others don't isolate.
+
+@3.2|S2|M
+A `/generate-docs` skill should only be able to write files, and shouldn't run shell commands. What does the guide say to configure?
++ `allowed-tools` in the skill's frontmatter
+- `context: fork` in the skill's frontmatter
+- `argument-hint` in the skill's frontmatter
+- A warning sentence in the skill's body
+= The guide teaches `allowed-tools` to restrict tools. *Build today: current docs describe it as tools usable without asking permission. Use deny rules to actually block tools.*
+
+@3.2|S2|M
+Developers often invoke `/migrate` and forget the target version. What helps?
++ `argument-hint` in the frontmatter
+- `context: fork` in the frontmatter
+- A longer description in CLAUDE.md
+- An `allowed-tools` entry for Read
+= `argument-hint` prompts for required parameters. `context: fork` isolates context, a CLAUDE.md description doesn't prompt, and `allowed-tools` deals with tool access.
+
+@3.2|S2|M
+You want your own version of the team's `/review`, without affecting anyone. What's the right approach?
++ Create a personal variant in `~/.claude/skills/`, with a different name
+- Edit the team's skill in the repo, and don't tell anyone about it
+- Copy it to `.claude/skills/` under a second name, and commit that
+- Change the team's skill locally, and exclude it from each commit
+= Personal variants with different names avoid affecting teammates. The others change shared behavior, or are fragile.
+
+@3.2|S2|M
+A team must choose where to put its "always use parameterized SQL" rule. Which is right?
++ CLAUDE.md, as it's a universal standard that should always be loaded
+- A skill, as it's more convenient to invoke the rule when you remember
+- A personal command, so that each developer can decide when it applies
+- A hook, since a CLAUDE.md can never contain any security guidance
+= Universal standards belong in always-loaded memory. Skills are on-demand.
+
+@3.2|S2|M
+Which belongs in a skill rather than in CLAUDE.md?
++ A release-notes workflow that's used before each release
+- The project's naming convention, for all source files
+- The rule that tests live beside the code they cover
+- The commit message format that all developers must use
+= Task-specific, on-demand workflows suit skills. The others always apply.
+
+@3.2|S2|E
+What file defines a skill?
++ `SKILL.md`
+- `CLAUDE.md`
+- `.mcp.json`
+- `package.json`
+= A skill lives in `.claude/skills/<name>/SKILL.md`. CLAUDE.md is memory, `.mcp.json` configures servers, and `package.json` is unrelated.
+
+@3.2|S2|H
+A brainstorming skill generates many rejected ideas, and later work seems influenced by them. What should you change?
++ Add `context: fork`, so the exploration doesn't remain in the main conversation
+- Add a closing instruction, asking the model to forget all the rejected ideas
+- Set `argument-hint` to "final only", so that rejected ideas are never produced
+- Move the skill's whole text into CLAUDE.md, where it's loaded in all sessions
+= Isolation stops exploratory content affecting later work. "Forget" isn't reliable, the others don't isolate, and CLAUDE.md makes it worse.
+
+@3.2|S2|H
+What does a forked skill give back to the main conversation?
++ A result from the isolated run, without its verbose working
+- Its full transcript, inserted line by line in the main session
+- Nothing at all, as forked skills can't communicate results
+- A copy of the main session's context, overwritten by the fork
+= The point of isolation is that the working stays out, while the outcome returns.
+
+@3.2|S4|M
+A skill must be available in all of your projects, though not to your teammates. Where should it go?
++ `~/.claude/skills/`
+- `.claude/skills/`
+- `CLAUDE.md`
+- `.claude/rules/`
+= User-scoped skills are personal and apply across your projects.
+
+@3.2|S2|M
+Which option is a benefit of project-scoped commands?
++ Everyone gets the same workflow after they pull the repo
+- They run faster than user-scoped commands on most machines
+- They're automatically loaded into every request's context
+- They bypass all of Claude Code's permission checks
+= Checked-in commands give everyone the same workflow. They aren't faster, aren't loaded into every request, and don't bypass permissions.
+
+@3.2|S2|H
+You write a one-page checklist that's needed once a week. Why is a skill better than CLAUDE.md?
++ It loads only when invoked, saving context
+- CLAUDE.md files can't contain any checklists, only prose rules
+- Skills are always more strictly obeyed than CLAUDE.md instructions
+- A skill's content can't be read by other developers on the team
+= On-demand loading saves context. The others are false.
+
+@3.2|S2|H
+A team's destructive-operations worry leads them to limit a skill to file writes. On the exam, which option is the recommended approach?
++ Configure `allowed-tools` for the skill
+- Rely on a skill description saying "be careful"
+- Use `argument-hint` to confirm the operation
+- Use `context: fork`, so that it can't do damage
+= The guide's example is exactly this. A fork isolates context, not capabilities. *Build today: enforce with deny rules or hooks, as above.*
+
+@3.2|S5|M
+A CI job needs a project's review procedure. Which helps most for consistency?
++ A checked-in skill or command that defines the procedure
+- A personal command on one developer's laptop
+- A verbal instruction at the team's weekly meeting
+- A copy pasted into each job's log output
+= A checked-in definition is versioned and available to CI. A laptop's command, a verbal note or a log entry can't be relied on by a pipeline.
+
+@3.2|S2|H
+Select the two frontmatter options the guide names for skills, besides `allowed-tools`.
++ `context: fork`
++ `argument-hint`
+- `priority: high`
+- `max-iterations`
+- `force-tool`
+= Those are named by the guide. The rest aren't guide options.
+
+@3.2|S2|H
+Select the two correct scope statements.
++ `.claude/commands/` is shared through version control
++ `~/.claude/skills/` is personal to the developer
+- `~/.claude/commands/` reaches everybody on clone
+- `.claude/skills/` can't be committed to the repository
+- `.claude/commands/` works only for the repo's owner
+= Project scope is shared, and user scope is personal.
+
+@3.3|S2|E
+How do you make a rules file load only for Terraform files?
++ YAML frontmatter with `paths: ["terraform/**/*"]`
+- A filename such as `terraform-only.md`, with no frontmatter
+- A first line in the file saying "only for Terraform"
+- A CLI flag on each run: `--rules terraform`
+= The `paths` field with globs activates rules conditionally. The others don't scope loading.
+
+@3.3|S2|M
+What's the main benefit of path-scoped rules?
++ They load only when relevant, reducing irrelevant context and token use
+- They run faster, since they're compiled when each session has started
+- They override the user's CLAUDE.md in all of the repository's sessions
+- They guarantee compliance, as Claude can't ignore a path-scoped rule
+= Conditional loading reduces context. They're still guidance, and not enforcement.
+
+@3.3|S2|M
+Test files live beside source files across the codebase, and all must follow one convention. What's best?
++ A rule with `paths: ["**/*.test.tsx"]`
+- A `CLAUDE.md` file in each directory with tests
+- A root CLAUDE.md section, loaded for everything
+- A skill that developers must run before writing tests
+= Glob rules apply by file type, regardless of location. Copies drift, the root loads everywhere, and skills rely on memory. *Work guide sample 6 as well.*
+
+@3.3|S2|M
+When is a subdirectory CLAUDE.md the better choice over a glob rule?
++ When conventions apply to one directory's whole subtree
+- When conventions apply to test files spread across packages
+- When the rule must apply to every `*.sql` file in the repo
+- When the rule has to load only for a certain file extension
+= Directory files fit one location. Spread-out file types fit globs.
+
+@3.3|S2|E
+Which pattern matches all TypeScript test files anywhere?
++ `**/*.test.ts`
+- `*.test.ts/**`
+- `test/*.ts`
+- `**/test.ts`
+= `**/` matches any directory, and `*.test.ts` the file name.
+
+@3.3|S2|M
+A rule has `paths: ["src/api/**/*"]`. When does it load?
++ When Claude works on files under `src/api/`
+- At the start of each session, for every developer
+- Only when a developer invokes it with a slash command
+- Only when running in non-interactive mode with `-p`
+= It's conditional upon matching paths. It isn't always loaded, or manually invoked.
+
+@3.3|S2|H
+Migration SQL files exist in `db/`, `services/*/migrations/` and `tools/`. Which design has the least maintenance?
++ One rule file with glob paths that match all migration files
+- A CLAUDE.md in each of those directories, kept in sync by hand
+- One long section in the root CLAUDE.md that's loaded in every session
+- A Git hook which comments on the rule when any SQL file has changed
+= One glob rule covers them all. Multiple files drift, the root wastes context, and a hook doesn't provide conventions during authoring.
+
+@3.3|S2|H
+A path rule isn't applied when editing `lib/foo.spec.ts`. Its frontmatter says `paths: ["**/*.test.ts"]`. What's the cause?
++ The glob doesn't match `.spec.ts`
+- Rules only work in the `src/` tree
+- `.spec.ts` needs a skill to be loaded
+- Globs aren't allowed in the `paths` field
+= The pattern doesn't match that file name. Add `**/*.spec.ts`.
+
+@3.3|S5|M
+Security rules should apply only to `auth/` and `payments/`. What's a good configuration?
++ `paths: ["auth/**/*", "payments/**/*"]`
+- `paths: "everything except docs"`
+- `scope: security` in the frontmatter
+- Two user-level files, one for each area
+= Multiple globs in `paths` work. The others aren't valid or shared.
+
+@3.3|S2|M
+What's the downside of a very broad rule such as `paths: ["**/*"]`?
++ It loads for all files, losing the benefit of scoping
+- It causes a parse error when the session is started
+- It applies to everybody except the file's author
+- It removes all other rule files from loading
+= A rule matching everything always loads, so you lose the context savings that scoping provides. It isn't a parse error, it applies to everyone, and it doesn't stop other rules loading.
+
+@3.3|S2|H
+A team has React, API and data conventions, and tests spread throughout. Which structure fits best?
++ Path-scoped rule files for each convention, including a `**/*.test.*` rule for tests
+- One root CLAUDE.md that contains everything, with headings to separate the sections
+- A skill per convention, invoked by each developer at the start of each task
+- A subdirectory CLAUDE.md for tests, copied to each directory that contains tests
+= Scoped rules load what's relevant, regardless of location. The others load everything, rely on memory, or drift.
+
+@3.3|S2|E
+Where do path-scoped rules live?
++ `.claude/rules/`
+- `.claude/paths/`
+- `.mcp.json`
+- `~/.claude.json`
+= Path-specific rules are files in `.claude/rules/` with `paths` frontmatter.
+
+@3.3|S2|H
+Select the two correct reasons for choosing a glob rule over a subdirectory CLAUDE.md.
++ The convention applies to file types across many directories
++ One file avoids keeping many copies synchronized
+- It guarantees that the model will follow the convention
+- It loads even when working on non-matching files
+- It's the only way to scope anything to a directory
+= Spread-out conventions and single maintenance are the reasons. Rules aren't guarantees, and scoping to a directory can use CLAUDE.md too.
+
+@3.3|S4|M
+A path rule mentions fixtures, and context seems smaller in sessions on unrelated files. Why?
++ The rule isn't loaded unless matching files are being worked on
+- Claude deletes unrelated rule files from the repository
+- Fixture rules are compressed by Claude Code before loading
+- Sessions automatically drop all rules after their first turn
+= Path-scoped rules load only when matching files are in play, so unrelated sessions don't carry them. Rule files aren't deleted, compressed, or dropped after a turn.
+
+@3.4|S2|E
+Which task best suits plan mode?
++ Migrating a library across 45 files
+- Fixing a typo in one error message
+- Adding a null check to one function
+- Renaming one local variable in a file
+= Large-scale changes with many files benefit from planning. The others are small and clear.
+
+@3.4|S2|E
+Which task suits direct execution?
++ A single-file bug fix with a clear stack trace
+- Splitting a monolith into services
+- Choosing between two integration designs
+- Restructuring a repo's module boundaries
+= Well-scoped fixes don't need a plan phase. The others involve architectural decisions.
+
+@3.4|S2|M
+You must choose between two caching approaches with different infrastructure needs. What should you do?
++ Use plan mode to explore the code and weigh both approaches before changing anything
+- Execute directly with the first approach, and revert it if there's a problem later
+- Ask Claude to implement both approaches at once, in the same branch and session
+- Pick the option that needs fewer files, and skip any further investigation at all
+= Multiple valid approaches call for planning. The others risk costly rework.
+
+@3.4|S2|M
+What's plan mode's main benefit?
++ Safe exploration and design before committing to changes, preventing costly rework
+- Faster generation of code, since nothing needs to be checked during a plan
+- Automatic merging of code to the main branch when a plan has been approved
+- Immunity from errors, since a planned change can't introduce any bugs at all
+= It lets you explore and design before changing code, which prevents costly rework. It isn't faster generation, it doesn't merge anything, and planned changes can still contain bugs.
+
+@3.4|S2|M
+A verbose discovery phase is filling the main context. What helps?
++ The Explore subagent, which isolates discovery and returns a summary
+- Running discovery twice, so that the model can remember it better
+- Raising `max_tokens`, so that there's more room for the discovery text
+- Writing all the output to CLAUDE.md, for reference in later sessions
+= Explore isolates discovery and returns a summary. Running it twice uses more, `max_tokens` limits output rather than context, and CLAUDE.md shouldn't hold discovery output.
+
+@3.4|S2|H
+You planned a library migration, and the approach is agreed. What's the sensible way to proceed?
++ Execute the planned approach directly, using the plan as the guide
+- Stay in plan mode permanently, as code must never be changed in that session
+- Discard the plan and start the investigation again, using direct execution
+- Ask for a further plan of the plan, to raise your confidence in it
+= Combining them is recommended: plan to investigate, then execute.
+
+@3.4|S2|M
+"Add a date validation conditional to `parseOrder()`." Which approach fits?
++ Direct execution
+- Plan mode with a design review
+- An Explore subagent, then a new plan
+- Forking two sessions for comparison
+= It's a small, clear change. The others are disproportionate.
+
+@3.4|S2|H
+A task looks simple, but while editing you discover that it touches an unclear shared abstraction used by 30 modules. What should you do?
++ Pause, and switch to plan mode to understand the impact and options
+- Continue with direct edits, since the task was described as being simple
+- Ask for the changes to be made quickly, before context fills up with analysis
+- Restrict changes to the first module, then leave the remainder as they are
+= Revealed complexity changes the right mode. The others ignore the new information.
+
+@3.4|S4|M
+Which indicates that you need plan mode?
++ Architectural implications, or several valid approaches
+- A short description in the task's ticket
+- A desire to keep the session as short as possible
+- A change limited to one clear line of code
+= Architectural implications and several valid approaches are reasons to explore first. A short ticket, a wish for speed, or a one-line change don't call for it.
+
+@3.4|S2|M
+Your team uses plan mode for every one-line fix, and work has slowed down. What's the best advice?
++ Reserve plan mode for complex work, and execute clear small changes directly
+- Stop using plan mode altogether, since it's clearly slowing down all the team's work
+- Keep using it, because more planning always leads to better results for any task
+- Use the Explore subagent on all one-line fixes, as a lighter alternative for planning
+= Match the mode to complexity. The extremes waste time, or lose planning when it's needed.
+
+@3.4|S2|E
+What does the Explore subagent return to the main conversation?
++ A summary of its discovery
+- A complete transcript of it
+- A new CLAUDE.md for the repo
+- Nothing, as it can only log
+= It returns a summary, which keeps verbose discovery out of the main context. A full transcript would defeat the purpose, and it doesn't write CLAUDE.md.
+
+@3.4|S2|H
+During a large refactor, main context is nearly exhausted after exploration, and implementation hasn't started. What would've prevented this?
++ Running discovery in the Explore subagent, keeping only a summary
+- Using direct execution from the start, so that exploration isn't needed at all
+- Writing a longer system prompt, which helps the model to remember its findings
+- Reading each file twice, so that key facts are reinforced before implementing
+= Isolating discovery prevents exhaustion in multi-phase tasks. The others don't.
+
+@3.4|S2|H
+"Upgrade our auth library; it has breaking changes, and it's used in about 60 places." What's the best workflow?
++ Plan mode for usages and approach, Explore for search, then execute
+- Direct execution, starting with the first file that happens to fail to compile
+- A single prompt asking for all 60 changes at once, without any exploration
+- A skill with `context: fork` to make all of the changes without any review
+= This combines planning, discovery isolation and execution. The others skip understanding.
+
+@3.4|S2|M
+Which is a poor reason to enter plan mode?
++ You want to change one clear line with a known fix
+- The task has several valid approaches to compare
+- The change will affect many files and modules
+- There are architectural decisions to be made
+= Planning a one-line known fix adds time with no benefit. The other three, several approaches, many files and architecture, are the reasons plan mode exists.
+
+@3.4|S2|H
+Select the two tasks for plan mode.
++ Restructuring a monolith into microservices
++ Choosing between integration approaches, with different infrastructure
+- Adding a single validation to one function
+- Fixing a known typo in the README
+- Updating one constant with a known new value
+= Those are architectural. The rest are simple, well-scoped changes.
+
+@3.4|S4|H
+Select the two reasons to use the Explore subagent.
++ It isolates verbose discovery output
++ It preserves the main conversation's context
+- It enforces compliance rules on tool calls
+- It guarantees that the code it finds is correct
+- It removes the need for any planning at all
+= Explore keeps verbose discovery out of the main conversation, returning a summary. It doesn't enforce rules, guarantee correctness, or replace planning.
+
+@3.5|S2|E
+Prose descriptions of a transformation keep giving inconsistent results. What's the most effective fix?
++ Provide 2–3 concrete input/output examples
+- Rewrite the prose in much stronger language
+- Ask Claude to think more carefully this time
+- Lower the model's output token limit further
+= Examples communicate transformations most effectively.
+
+@3.5|S2|M
+What does test-driven iteration with Claude involve?
++ Write the tests first, then iterate by sharing failures
+- Write the code first, then ask for tests that pass
+- Run the tests once at the end of the entire project
+- Delete failing tests, so that the suite stays green
+= Tests define behavior, and failures guide improvements.
+
+@3.5|S2|M
+You're building a cache in an unfamiliar domain, and unsure what you've missed. What technique fits?
++ The interview pattern: have Claude ask questions before implementing
+- Implement right away, and ask about any problems that come up afterward
+- Ask Claude to pick all the design parameters without any further discussion
+- Paste a long article about caching, and ask for an implementation from it
+= Interviewing surfaces considerations such as invalidation and failure modes.
+
+@3.5|S2|M
+You've found three bugs in a function, and fixing one changes how the others behave. How should you report them?
++ All together in one detailed message, as the fixes interact
+- One at a time, with each in a new session
+- Only the most serious, and hope the rest resolve
+- In three separate messages, with no connection between them
+= Interacting problems are best handled together. Independent ones can go sequentially.
+
+@3.5|S2|M
+You've found three unrelated bugs in three different modules. What's a reasonable approach?
++ Fix them sequentially, since they're independent
+- Combine them in one message, as more context always helps
+- Fix only one, as the others probably aren't important
+- Ask for a redesign of all three modules before fixing anything
+= Independent issues can be fixed one at a time, with less risk. Combining them adds no benefit, and ignoring two or redesigning everything isn't proportionate.
+
+@3.5|S2|M
+A migration script mishandles null values. What's the most effective way to communicate the fix?
++ A specific test case, with example input and expected output
+- A general request to handle edge cases more robustly
+- A request to review the script again, more carefully
+- A note in CLAUDE.md that edge cases are important
+= A specific input and expected output pins down the behavior. General requests to be robust or careful don't say what's wrong, and a CLAUDE.md note is too general for this bug.
+
+@3.5|S2|H
+Claude's date parser passes your examples but fails on an unseen format. What's the best next step?
++ Add a failing test covering that format, then iterate
+- Tell it the code is wrong, and ask it to try again
+- Remove that format from what the product supports
+- Start a fresh session with the same description
+= Add it to the concrete evidence. Vague feedback doesn't help, and the others avoid the issue.
+
+@3.5|S2|E
+How many concrete examples does the guide suggest to clarify a transformation?
++ 2–3
+- Exactly 1
+- 25–30
+- None
+= 2–3 input/output examples usually clarify requirements.
+
+@3.5|S2|H
+Which test suite gives the best guidance before implementation?
++ Tests for expected behavior, edge cases, and performance requirements
+- One happy-path test, since additional tests may confuse the model
+- Tests written by Claude after it has finished with the implementation
+- Tests that check only whether the code is able to compile successfully
+= Complete requirements guide iterations. Late tests can simply mirror the code.
+
+@3.5|S2|M
+What's the interview pattern's main value?
++ It surfaces considerations you hadn't anticipated
+- It lets Claude avoid implementing the feature at all
+- It makes each model response shorter and cheaper
+- It replaces the need for tests in the project
+= Having Claude ask questions first surfaces considerations you may have missed. It still implements the feature, doesn't aim to shorten responses, and doesn't replace tests.
+
+@3.5|S2|M
+You describe a log format in a long paragraph, and output varies across runs. What should you do?
++ Show two or three sample inputs, with the exact expected outputs
+- Make the paragraph longer, to remove any possible ambiguity
+- Repeat the paragraph three times, for greater emphasis
+- Ask Claude to infer the format from similar projects
+= Concrete examples remove interpretation, which prose leaves open. Longer or repeated paragraphs keep the same ambiguity, and similar projects may use different formats.
+
+@3.5|S2|H
+When would you not use the interview pattern?
++ For a small, well-specified change with no open questions
+- For an unfamiliar domain with many design decisions
+- For a feature with failure modes that aren't understood
+- For a design with unclear invalidation requirements
+= It helps with uncertainty. Well-specified work doesn't need it.
+
+@3.5|S2|H
+Fixing validation broke the error messages, and fixing those broke logging. Sequential messages keep regressing. What should you change?
++ Describe all of the interacting issues together, and ask for one coherent fix
+- Keep going one by one, as the regressions will eventually stop by themselves
+- Start each fix in a new session, so that it isn't influenced by the others
+- Disable the logging tests, so that regressions stop appearing in the output
+= These problems interact, so describe them together and ask for one coherent fix. Continuing singly keeps regressing, fresh sessions lose the connection, and disabling tests hides the problem.
+
+@3.5|S5|M
+Which feedback to Claude is most useful in test-driven iteration?
++ The actual failing test output
+- "It still doesn't work properly"
+- "Try harder, this one is important"
+- "Other developers would expect better"
+= Real failure output shows exactly what's wrong. Encouragement or "it still doesn't work" gives nothing to act on.
+
+@3.5|S2|H
+Select the two techniques for inconsistent transformations.
++ Concrete input/output examples
++ Tests that show the expected results
+- Stronger adjectives in the request
+- Larger maximum output token settings
+- Asking for confidence scores on results
+= Examples and tests state exactly what's expected. Stronger adjectives, larger token limits and confidence scores don't clarify the transformation.
+
+@3.5|S2|H
+Select the two cases for sending all issues in one message.
++ The fixes depend on each other
++ A change to one alters the others' behavior
+- The issues are in unrelated services
+- Each issue has an isolated one-line fix
+- Each can be verified independently
+= When fixes interact, they need to be considered together. Issues that are unrelated, isolated or independently verifiable can be handled one at a time.
+
+@3.6|S5|E
+Which flag runs Claude Code non-interactively in a pipeline?
++ `-p`
+- `--batch`
+- `--ci`
+- `--headless`
+= `-p` (or `--print`) is correct. The others aren't options in the guide. *Work guide sample 10 as well.*
+
+@3.6|S5|M
+A nightly job calling `claude "summarize today's changes"` keeps hitting the runner's timeout, as it's waiting at a prompt. What's the fix?
++ Run with `-p`, passing the prompt on the command line
+- Set `CLAUDE_HEADLESS=true` in the job's environment
+- Redirect `/dev/null` into a normal interactive session
+- Add a CLAUDE.md line saying never to ask for input
+= `-p` is the supported non-interactive mode. `CLAUDE_HEADLESS` doesn't exist, and the others are workarounds that don't configure the mode.
+
+@3.6|S5|M
+You need machine-parseable findings for inline PR comments. What should you use?
++ `--output-format json` with `--json-schema`
+- A regular expression over the normal text output
+- A request in the prompt to "please reply as JSON"
+- `--verbose`, with a script that reads the log file
+= These flags enforce structure. Text parsing and prompt-only requests are fragile.
+
+@3.6|S5|M
+Where does CI-invoked Claude Code get testing standards and fixture conventions?
++ The repository's CLAUDE.md
+- The CI server's system log
+- The developer's user-level file
+- An environment variable, per rule
+= The repository's CLAUDE.md gives CI its project context. Logs aren't instructions, user-level files aren't in the repo, and one variable per rule isn't how this is done.
+
+@3.6|S5|M
+A reviewer session that also generated the code misses subtle bugs. Why?
++ It retains its reasoning, so it rarely questions its decisions
+- Sessions lose the ability to read code after they've generated any of it
+- The model is prevented by policy from criticizing its own earlier output
+- Generation uses up the session's allowed number of review comments
+= Session context biases self-review. An independent instance does better.
+
+@3.6|S5|M
+After a new commit, a re-run of review posts many duplicate comments. What's the fix?
++ Include prior findings, and ask only for new or unaddressed issues
+- Delete all the earlier comments on the PR before each new review runs
+- Run the review once, and never re-run it, however many commits are pushed
+- Use a different model on each run, so that comments come out differently
+= Prior findings in context prevent duplicates. Deleting loses history, and the others don't address it.
+
+@3.6|S5|M
+Generated tests duplicate what's already covered. What helps most?
++ Provide existing test files in the context
+- Ask for many more tests, then remove duplicates afterward
+- Generate them with `--output-format json`
+- Run generation on a nightly schedule instead
+= Showing the existing tests tells it what's covered. Generating more and filtering wastes effort, and neither JSON output nor a schedule shows existing coverage.
+
+@3.6|S5|M
+Test generation produces many low-value tests. What's the most useful change?
++ Document testing standards, valuable test criteria and available fixtures in CLAUDE.md
+- Lower the number of tests requested, and hope the best ones come out first
+- Ask for tests with a higher self-reported confidence, and discard all the others
+- Switch to the batch API, as batched generation produces better test quality
+= Clear standards improve quality. The others don't define "valuable."
+
+@3.6|S5|E
+Which of these is a real flag for structured CI output?
++ `--json-schema`
+- `--batch-json`
+- `--force-schema`
+- `CLAUDE_JSON=1`
+= `--json-schema` is named in the guide. The other three look plausible, and they aren't real flags in it.
+
+@3.6|S5|H
+A team uses `claude -p` output as text, and a regex extracts findings. It breaks often. What's the best change?
++ Use `--output-format json` and `--json-schema`, and consume the structured result
+- Improve the regex, adding more cases each time that a new format appears
+- Ask developers to read the output by hand, and to post comments themselves
+- Use a larger model, as a larger model's formatting will be more consistent
+= Schema-enforced JSON removes fragile parsing. More regex cases keep breaking, manual posting loses the automation, and a larger model doesn't guarantee a format.
+
+@3.6|S5|H
+Why run review in a separate Claude instance from code generation?
++ An independent instance has no prior reasoning to defend, so it catches more
+- Separate instances are billed at a lower rate for the review work
+- The CLI refuses to review code that the same process has generated
+- Separate instances automatically have access to more of the repository
+= An independent instance has no earlier reasoning to defend, so it catches more (TS 4.6). It's not about pricing, CLI restrictions or repository access.
+
+@3.6|S5|M
+The pipeline must pass the PR diff to Claude. Which is correct in principle?
++ Provide it as part of the `-p` prompt or piped context, in the job script
+- Use an interactive session, and type it in through a remote terminal
+- Add the diff to CLAUDE.md, and commit it to the repository before each run
+- Let Claude find it itself through memory from the previous job's session
+= Non-interactive input fits. The others are manual or pollute the repo.
+
+@3.6|S5|H
+A blocking pre-merge review must post inline comments quickly. Which combination fits?
++ Synchronous `-p` run, JSON schema output, and a script to post comments
+- Batch API submission, with results collected on the following morning
+- Interactive session on a developer's laptop, copied into the PR by hand
+- Text output with a nightly job that reformats it for the next day
+= It's blocking, so it must be synchronous, and it has to be parseable. Batch has no latency guarantee.
+
+@3.6|S5|H
+Your CI review keeps flagging issues that were already marked as accepted. What's the best design?
++ Pass prior findings and their status, and skip the accepted ones
+- Tell the model that developers have stopped trusting it, and to be conservative
+- Lower the number of files reviewed, so that fewer issues get flagged
+- Run the review only on Fridays, so that repeated comments are less frequent
+= Prior findings with status avoid repeated noise. The others don't address it.
+
+@3.6|S5|M
+Which CLAUDE.md content helps CI test generation most?
++ Fixture locations, and criteria for good tests
+- The team's holiday calendar and on-call rota
+- A statement that all the tests should be good
+- A record of last quarter's deployment dates
+= Fixtures and criteria for valuable tests directly shape what gets generated. Calendars and deployment dates aren't relevant, and "be good" gives no criteria.
+
+@3.6|S5|H
+Select the two flags that give machine-parseable CI output.
++ `--output-format json`
++ `--json-schema`
+- `--parse-comments`
+- `--ci-mode`
+- `--batch`
+= `--output-format json` and `--json-schema` are the guide's flags. The other three aren't real options in the guide, and `--batch` is a common distractor.
+
+@3.6|S5|H
+Select the two practices for avoiding duplicates in CI.
++ Including prior review findings in re-runs
++ Providing existing tests when generating tests
+- Asking the model to be more conservative
+- Running every job with a different random seed
+- Reducing the job's timeout by half
+= Prior findings and existing tests show what's already been said or covered. Being conservative, random seeds and shorter timeouts don't provide that information.
+
+@3.6|S5|E
+What does `-p` stand for in the guide?
++ `--print`
+- `--plan`
+- `--parallel`
+- `--pipeline`
+= `-p` is short for `--print`, the non-interactive mode for pipelines. It has nothing to do with planning, parallelism or a pipeline option.
